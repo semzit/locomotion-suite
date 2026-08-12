@@ -1,0 +1,3 @@
+task:
+  name: walk_forward
+  terrain: flat

@@ -1,0 +1,3 @@
+algorithm:
+  plugin: ppo
+  total_steps: 1000000
