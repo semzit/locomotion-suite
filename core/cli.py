@@ -7,7 +7,7 @@ from .runner import ExperimentRunner
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="locomotio")
+    parser = argparse.ArgumentParser(prog="locomotion")
     commands = parser.add_subparsers(dest="command", required=True)
     validate = commands.add_parser("validate", help="Validate an experiment manifest")
     validate.add_argument("--manifest", required=True)

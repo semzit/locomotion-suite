@@ -1,1 +1,1 @@
-"""Thin orchestration layer for Locomotio Suite."""
+"""Thin orchestration layer for Locomotion Suite."""

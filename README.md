@@ -1,4 +1,4 @@
-# Locomotio Suite
+# Locomotion Suite
 
 Config-driven, plugin-based orchestration for humanoid reinforcement-learning workflows.
 
