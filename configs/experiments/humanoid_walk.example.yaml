@@ -3,12 +3,12 @@ experiment:
   mode: train
   seed: 42
 includes:
-  - ../configs/stacks/sim_mujoco.yaml
-  - ../configs/stacks/algo_ppo.yaml
-  - ../configs/stacks/compute_local.yaml
+  - ../stacks/sim_mujoco.yaml
+  - ../stacks/algo_ppo.yaml
+  - ../stacks/compute_local.yaml
 overrides:
   algorithm.total_steps: 5000000
-benchmarks: ../configs/benchmarks/locomotion_v1.yaml
+benchmarks: ../benchmarks/locomotion_v1.yaml
 gates:
   fall_rate_max: 0.05
 artifacts:

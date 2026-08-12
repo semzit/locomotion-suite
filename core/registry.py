@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+from beartype import beartype
+
 
 class PluginRegistry:
     """In-process registry; entry-point discovery is a later Phase 0 increment."""
@@ -10,6 +12,7 @@ class PluginRegistry:
     def __init__(self) -> None:
         self._factories: dict[str, Callable[..., Any]] = {}
 
+    @beartype
     def register(self, name: str, factory: Callable[..., Any]) -> None:
         if name in self._factories:
             raise ValueError(f"Plugin already registered: {name}")
