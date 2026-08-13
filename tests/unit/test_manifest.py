@@ -8,6 +8,7 @@ from pydantic import TypeAdapter
 
 from core.manifest import load_manifest
 from core.runner import ExperimentRunner
+from core.utils import build_parser
 
 
 def test_reference_manifest_validates() -> None:
@@ -19,6 +20,17 @@ def test_reference_manifest_validates() -> None:
     assert manifest.model_extra["algorithm"]["plugin"] == "ppo"
     assert manifest.model_extra["algorithm"]["total_steps"] == 5000000
     assert manifest.model_extra["compute"]["plugin"] == "local"
+
+
+def test_cli_build_parser_supports_validate_and_plugins() -> None:
+    parser = build_parser()
+
+    validate_args = parser.parse_args(["validate", "--manifest", "example.yaml"])
+    plugins_args = parser.parse_args(["plugins"])
+
+    assert validate_args.command == "validate"
+    assert validate_args.manifest == "example.yaml"
+    assert plugins_args.command == "plugins"
 
 
 def test_manifest_rejects_include_cycles(tmp_path: Path) -> None:

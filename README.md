@@ -3,8 +3,15 @@
 Config-driven, plugin-based orchestration for humanoid reinforcement-learning workflows.
 
 ```bash
-python -m core.cli validate --manifest configs/experiments/humanoid_walk.yaml
+python -m core.cli validate --manifest configs/experiments/humanoid_walk.example.yaml
+python -m core.cli plugins
 ```
+
+## Plugins
+
+Plugin packages register a callable factory in the `locomotion_suite.plugins` entry-point group.
+The entry-point name is the identifier used in stack configuration (for example, `ppo`, `mujoco`,
+or `local`). List installed plugins with `locomotion plugins`.
 
 ## Development checks
 
