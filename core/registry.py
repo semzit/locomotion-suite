@@ -6,10 +6,15 @@ from typing import cast
 
 from beartype import beartype
 
+from plugins.algorithms.ppo import PPOAlgorithm
+from plugins.compute.local import LocalComputeBackend
+from plugins.sim.mujoco import MuJoCoSim
+
 from .observability import logger, tracer
 from .utils import PLUGIN_ENTRY_POINT_GROUP
 
 PluginFactory = Callable[..., object]
+
 
 class PluginDiscoveryError(RuntimeError):
     """Raised when an installed plugin cannot be loaded safely."""
@@ -20,6 +25,12 @@ class PluginRegistry:
 
     def __init__(self) -> None:
         self._factories: dict[str, PluginFactory] = {}
+        for name, factory in {
+            "local": LocalComputeBackend,
+            "mujoco": MuJoCoSim,
+            "ppo": PPOAlgorithm,
+        }.items():
+            self.register(name, cast(PluginFactory, factory))
 
     @beartype
     def register(self, name: str, factory: PluginFactory) -> None:

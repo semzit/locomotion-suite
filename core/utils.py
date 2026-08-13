@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import argparse
+from typing import Any
 
+from pydantic import TypeAdapter
 
 PLUGIN_ENTRY_POINT_GROUP = "locomotion_suite.plugins"
+
+CONFIG_MAPPING: TypeAdapter[dict[str, Any]] = TypeAdapter(dict[str, Any])
+
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the command-line parser for the locomotion CLI."""

@@ -32,6 +32,13 @@ def test_registry_rejects_invalid_plugin_name_type() -> None:
         PluginRegistry().register(1, object)  # type: ignore[arg-type]
 
 
+def test_registry_exposes_reference_stack_plugins() -> None:
+    registry = PluginRegistry()
+
+    assert {"local", "mujoco", "ppo"}.issubset(set(registry.names()))
+    assert registry.create("ppo").__class__.__name__ == "PPOAlgorithm"
+
+
 def test_registry_discovers_entry_point_plugins(monkeypatch: pytest.MonkeyPatch) -> None:
     entries = [
         FakeEntryPoint("second", "plugins.second:factory", lambda: "second"),
@@ -45,7 +52,8 @@ def test_registry_discovers_entry_point_plugins(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setattr("core.registry.metadata.entry_points", entry_points)
     registry = PluginRegistry()
 
-    assert registry.discover() == ("first", "second")
+    available = set(registry.discover())
+    assert {"first", "second"}.issubset(available)
     assert registry.create("first") == "first"
 
 

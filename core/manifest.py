@@ -5,7 +5,9 @@ from typing import Any
 
 from omegaconf import OmegaConf
 from omegaconf.errors import OmegaConfBaseException
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+from .utils import CONFIG_MAPPING
 
 
 class ExperimentSettings(BaseModel):
@@ -33,9 +35,6 @@ class ConfigDocument(BaseModel):
     model_config = ConfigDict(extra="allow")
     includes: list[str] = Field(default_factory=list)
     overrides: dict[str, Any] = Field(default_factory=dict)
-
-
-CONFIG_MAPPING: TypeAdapter[dict[str, Any]] = TypeAdapter(dict[str, Any])
 
 
 def load_manifest(path: str | Path) -> ExperimentManifest:
