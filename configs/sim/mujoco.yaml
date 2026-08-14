@@ -1,2 +1,12 @@
 plugin: mujoco
 time_limit: 10.0
+robust: false
+randomization:
+  mass_scale: [0.8, 1.2]
+  friction_scale: [0.5, 1.5]
+  damping_scale: [0.5, 1.5]
+  noise_std: 0.0
+  action_noise_std: 0.0
+  latency_steps: 0
+  perturbation_force: 0.0
+  perturbation_prob: 0.0

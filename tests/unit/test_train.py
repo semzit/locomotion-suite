@@ -9,7 +9,8 @@ from omegaconf import DictConfig
 
 from weir.algo.ppo import PPOAlgorithm
 from weir.envs.mujoco import MuJoCoSim
-from weir.train import check_conformance, run
+from weir.envs.randomized import RandomizedSim
+from weir.train import build_sim, check_conformance, run
 from weir.utils import CONFIG_DIR
 
 ROOT = Path(__file__).parents[2]
@@ -57,6 +58,12 @@ def test_run_completes_a_short_rollout(caplog: pytest.LogCaptureFixture) -> None
 
 def test_conformance_passes_for_reference_plugins() -> None:
     check_conformance(MuJoCoSim(), PPOAlgorithm())
+
+
+def test_build_sim_wraps_when_robust() -> None:
+    assert isinstance(build_sim({"plugin": "mujoco"}), MuJoCoSim)
+    hardened = build_sim({"plugin": "mujoco", "robust": True, "randomization": {}})
+    assert isinstance(hardened, RandomizedSim)
 
 
 def test_conformance_rejects_non_sim() -> None:

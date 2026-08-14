@@ -62,6 +62,19 @@ class AlgorithmPlugin(Protocol):
     def export_policy(self) -> nn.Module: ...
 
 
+@runtime_checkable
+class DomainRandomizable(Protocol):
+    """Optional simulator capability used by the hardening wrapper.
+
+    A sim that exposes its physics domain parameters lets a wrapper randomize
+    them per episode, and accepts external wrenches for perturbation pushes.
+    """
+
+    def domain_params(self) -> dict[str, Any]: ...
+    def apply_domain_params(self, params: dict[str, Any]) -> None: ...
+    def apply_perturbation(self, force: Action) -> None: ...
+
+
 @dataclass(slots=True)
 class TransitionBatch:
     """Simulator-to-algorithm wire format."""

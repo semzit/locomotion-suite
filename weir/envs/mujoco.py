@@ -75,6 +75,30 @@ class MuJoCoSim:
         self._data = None
         self._model = None
 
+    def domain_params(self) -> dict[str, Any]:
+        model = self._require_model()
+        return {
+            "body_mass": model.body_mass.copy(),
+            "geom_friction": model.geom_friction.copy(),
+            "dof_damping": model.dof_damping.copy(),
+        }
+
+    def apply_domain_params(self, params: dict[str, Any]) -> None:
+        model = self._require_model()
+        data = self._require_data()
+        if "body_mass" in params:
+            model.body_mass[:] = params["body_mass"]
+        if "geom_friction" in params:
+            model.geom_friction[:] = params["geom_friction"]
+        if "dof_damping" in params:
+            model.dof_damping[:] = params["dof_damping"]
+        mujoco.mj_forward(model, data)
+
+    def apply_perturbation(self, force: Action) -> None:
+        data = self._require_data()
+        data.xfrc_applied[0, :3] = np.asarray(force, dtype=float)[:3]
+        data.xfrc_applied[0, 3:] = 0.0
+
     def _observe(self, data: mujoco.MjData) -> Observation:
         return np.concatenate([data.qpos, data.qvel]).astype(np.float32)
 
