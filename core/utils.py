@@ -19,4 +19,10 @@ def build_parser() -> argparse.ArgumentParser:
     validate.add_argument("--manifest", required=True)
 
     commands.add_parser("plugins", help="List installed plugin entry points")
+
+    run = commands.add_parser(
+        "run",
+        help="Execute a minimal experiment and emit an artifact bundle",
+    )
+    run.add_argument("--manifest", required=True)
     return parser

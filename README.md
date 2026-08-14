@@ -38,3 +38,24 @@ uv run ruff check . && uv run ruff format --check . && uv run pyright && uv run 
 
 Once this folder is initialized as a Git repository, enable the local checks with
 `uv run pre-commit install`.
+
+## Hydra (prototype)
+
+Hydra integration is available as a prototype entrypoint. It provides `hydra`-style
+overrides and config composition while reusing the existing manifest-driven runner.
+
+Install the package in editable mode to get the console script:
+
+```bash
+python -m pip install -e .
+```
+
+Then run with a manifest override:
+
+```bash
+locomotion-hydra --manifest=configs/experiments/humanoid_walk.example.yaml
+```
+
+Notes:
+- Hydra changes the working directory for runs by default (outputs go under `hydra.run.dir`).
+- This is a minimal prototype; if you'd like, I can convert the `configs/` tree to Hydra config groups.

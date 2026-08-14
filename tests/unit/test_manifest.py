@@ -22,15 +22,33 @@ def test_reference_manifest_validates() -> None:
     assert manifest.model_extra["compute"]["plugin"] == "local"
 
 
-def test_cli_build_parser_supports_validate_and_plugins() -> None:
+def test_cli_build_parser_supports_validate_plugins_and_run() -> None:
     parser = build_parser()
 
     validate_args = parser.parse_args(["validate", "--manifest", "example.yaml"])
     plugins_args = parser.parse_args(["plugins"])
+    run_args = parser.parse_args(["run", "--manifest", "example.yaml"])
 
     assert validate_args.command == "validate"
     assert validate_args.manifest == "example.yaml"
     assert plugins_args.command == "plugins"
+    assert run_args.command == "run"
+    assert run_args.manifest == "example.yaml"
+
+
+def test_runner_executes_reference_manifest_and_emits_bundle(tmp_path: Path) -> None:
+    root = Path(__file__).parents[2]
+    manifest = load_manifest(root / "configs" / "experiments" / "humanoid_walk.example.yaml")
+
+    bundle = ExperimentRunner().run(manifest, output_dir=tmp_path / "artifacts")
+
+    assert bundle.root == (tmp_path / "artifacts").resolve()
+    assert bundle.manifest_snapshot.exists()
+    assert bundle.metadata["mode"] == "train"
+    assert bundle.metadata["sim_plugin"] == "mujoco"
+    assert bundle.metadata["algorithm_plugin"] == "ppo"
+    assert bundle.metadata["compute_plugin"] == "local"
+    assert "policy" in bundle.files
 
 
 def test_manifest_rejects_include_cycles(tmp_path: Path) -> None:
