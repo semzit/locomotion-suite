@@ -16,10 +16,10 @@ class MuJoCoSim:
     def step(self, actions: Any) -> dict[str, Any]:
         return {"actions": actions, "reward": 0.0, "done": False}
 
-    def observation_spec(self) -> dict[str, Any]:
+    def observation_shape(self) -> dict[str, Any]:
         return {"shape": [0], "dtype": "float32"}
 
-    def action_spec(self) -> dict[str, Any]:
+    def action_shape(self) -> dict[str, Any]:
         return {"shape": [0], "dtype": "float32"}
 
     def close(self) -> None:

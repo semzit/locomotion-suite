@@ -16,7 +16,7 @@ def test_stub_implementations_conform_to_protocols() -> None:
 
 
 def test_mujoco_sim_exposes_protocol_methods() -> None:
-    required = {"load", "reset", "step", "observation_spec", "action_spec", "close"}
+    required = {"load", "reset", "step", "observation_shape", "action_shape", "close"}
     assert not required.difference(MuJoCoSim.__dict__)
 
 
@@ -46,8 +46,8 @@ def test_mujoco_sim_runs_stub_loop() -> None:
     assert obs["batch_size"] == 1
     assert "reward" in step
     assert "done" in step
-    assert sim.observation_spec()["dtype"] == "float32"
-    assert sim.action_spec()["shape"] == [0]
+    assert sim.observation_shape()["dtype"] == "float32"
+    assert sim.action_shape()["shape"] == [0]
 
 
 def test_ppo_algorithm_runs_stub_roundtrip(tmp_path: Path) -> None:

@@ -15,6 +15,9 @@ dependencies = [
     "pydantic>=2.0",
 ]
 
+[project.scripts]
+weir-train = "weir.train:main"
+
 [dependency-groups]
 dev = [
     "hypothesis>=6.165.3",

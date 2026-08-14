@@ -1,0 +1,11 @@
+defaults:
+  - _self_
+  - robot: cartpole
+  - task: survive
+  - sim: mujoco
+  - algo: ppo
+
+train:
+  seed: 0
+  total_steps: 1000
+  log_every: 100

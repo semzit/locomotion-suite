@@ -10,12 +10,13 @@ short version, and [docs/engineering-rules.md](docs/engineering-rules.md) for en
 ## Quick start
 
 ```bash
-python weir/train.py sim=mujoco algo=ppo
-python weir/train.py sim=mujoco algo=sac         # swap the algorithm, same simulator
-python weir/train.py sim=isaac_lab algo=ppo      # swap the simulator, same algorithm
+uv run weir-train robot=cartpole task=survive
+uv run weir-train robot=simple_humanoid task=standing   # swap the robot, same pipeline
+uv run weir-train robot=humanoid                        # menagerie humanoid, default task
 ```
 
-`train.py` imports only the Protocols; Hydra selects which concrete class satisfies each interface.
+`train.py` imports only the Protocols; Hydra selects which concrete class satisfies each
+interface from the config groups under `configs/` (`robot/`, `task/`, `sim/`, `algo/`).
 The trained policy exports to a standalone `.onnx` file via `weir/export.py`.
 
 ## Development checks

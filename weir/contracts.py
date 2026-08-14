@@ -2,30 +2,32 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from torch import nn
 
 
+@runtime_checkable
 class SimBackend(Protocol):
     """Simulator boundary: reset/step a physics model and describe its interface."""
 
     def load(self, robot_spec: dict[str, Any], sim_config: dict[str, Any]) -> None: ...
     def reset(self, batch_size: int) -> Any: ...
     def step(self, actions: Any) -> Any: ...
-    def observation_spec(self) -> dict[str, Any]: ...
-    def action_spec(self) -> dict[str, Any]: ...
+    def observation_shape(self) -> dict[str, Any]: ...
+    def action_shape(self) -> dict[str, Any]: ...
     def close(self) -> None: ...
 
 
+@runtime_checkable
 class AlgorithmPlugin(Protocol):
     """Learning and policy boundary."""
 
     def configure(
         self,
-        observation_spec: dict[str, Any],
-        action_spec: dict[str, Any],
+        observation_shape: dict[str, Any],
+        action_shape: dict[str, Any],
         config: dict[str, Any],
     ) -> None: ...
     def act(self, observations: Any, deterministic: bool = False) -> Any: ...

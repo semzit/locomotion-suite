@@ -14,12 +14,12 @@ class PPOAlgorithm:
 
     def configure(
         self,
-        observation_spec: dict[str, Any],
-        action_spec: dict[str, Any],
+        observation_shape: dict[str, Any],
+        action_shape: dict[str, Any],
         config: dict[str, Any],
     ) -> None:
-        self.observation_spec = observation_spec
-        self.action_spec = action_spec
+        self.observation_shape = observation_shape
+        self.action_shape = action_shape
         self.config = config
 
     def act(self, observations: Any, deterministic: bool = False) -> Any:
