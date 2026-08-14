@@ -3,7 +3,7 @@ from pathlib import Path
 import mujoco
 import pytest
 
-MODELS_DIR = Path(__file__).parents[2] / "weir" / "models"
+from weir.envs.utils import MODELS_DIR
 
 
 def _model_path(name: str) -> Path:

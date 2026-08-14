@@ -7,6 +7,8 @@ from typing import Any, cast
 from omegaconf import OmegaConf
 
 ROOT = Path(__file__).resolve().parents[1]
+PACKAGE_DIR = ROOT / "weir"
+CONFIG_DIR = ROOT / "configs"
 
 
 def resolve_model_path(path: str) -> str:
@@ -22,30 +24,33 @@ def config_to_dict(section: Any) -> dict[str, Any]:
     return cast(dict[str, Any], OmegaConf.to_container(section, resolve=True) or {})
 
 
+_RESERVED = {
+    "name",
+    "msg",
+    "message",
+    "args",
+    "levelname",
+    "levelno",
+    "pathname",
+    "filename",
+    "module",
+    "exc_info",
+    "exc_text",
+    "stack_info",
+    "lineno",
+    "funcName",
+    "created",
+    "msecs",
+    "relativeCreated",
+    "thread",
+    "threadName",
+    "processName",
+    "process",
+    "taskName",
+}
+
+
 def log_event(logger: logging.Logger, event: str, **fields: Any) -> None:
     """Log an INFO event with structured fields, avoiding reserved LogRecord keys."""
-    reserved = {
-        "name",
-        "msg",
-        "args",
-        "levelname",
-        "levelno",
-        "pathname",
-        "filename",
-        "module",
-        "exc_info",
-        "exc_text",
-        "stack_info",
-        "lineno",
-        "funcName",
-        "created",
-        "msecs",
-        "relativeCreated",
-        "thread",
-        "threadName",
-        "processName",
-        "process",
-        "taskName",
-    }
-    extra = {key: value for key, value in fields.items() if key not in reserved}
+    extra = {key: value for key, value in fields.items() if key not in _RESERVED}
     logger.info(event, extra=extra)
