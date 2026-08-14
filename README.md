@@ -1,17 +1,22 @@
-# Locomotion Suite
+# Weir
 
-Config-driven, plugin-based orchestration for humanoid reinforcement-learning workflows.
+Train a simulated legged robot to walk using reinforcement learning. A small, self-contained
+project: a `SimBackend` and an `AlgorithmPlugin` Protocol, a training loop that never imports a
+concrete implementation, Hydra config, and ONNX policy export.
+
+See [docs/PLAN.md](docs/PLAN.md) for the full plan, [docs/overview.md](docs/overview.md) for the
+short version, and [docs/engineering-rules.md](docs/engineering-rules.md) for engineering rules.
+
+## Quick start
 
 ```bash
-python -m core.cli validate --manifest configs/experiments/humanoid_walk.example.yaml
-python -m core.cli plugins
+python weir/train.py sim=mujoco algo=ppo
+python weir/train.py sim=mujoco algo=sac         # swap the algorithm, same simulator
+python weir/train.py sim=isaac_lab algo=ppo      # swap the simulator, same algorithm
 ```
 
-## Plugins
-
-Plugin packages register a callable factory in the `locomotion_suite.plugins` entry-point group.
-The entry-point name is the identifier used in stack configuration (for example, `ppo`, `mujoco`,
-or `local`). List installed plugins with `locomotion plugins`.
+`train.py` imports only the Protocols; Hydra selects which concrete class satisfies each interface.
+The trained policy exports to a standalone `.onnx` file via `weir/export.py`.
 
 ## Development checks
 
@@ -21,7 +26,7 @@ Create the dev environment once:
 uv sync --group dev
 ```
 
-Then run the checks in the project-native style:
+Then run the checks:
 
 ```bash
 uv run ruff check .
@@ -29,33 +34,3 @@ uv run ruff format --check .
 uv run pyright
 uv run pytest
 ```
-
-Or run the full validation stack in one go:
-
-```bash
-uv run ruff check . && uv run ruff format --check . && uv run pyright && uv run pytest
-```
-
-Once this folder is initialized as a Git repository, enable the local checks with
-`uv run pre-commit install`.
-
-## Hydra (prototype)
-
-Hydra integration is available as a prototype entrypoint. It provides `hydra`-style
-overrides and config composition while reusing the existing manifest-driven runner.
-
-Install the package in editable mode to get the console script:
-
-```bash
-python -m pip install -e .
-```
-
-Then run with a manifest override:
-
-```bash
-locomotion-hydra --manifest=configs/experiments/humanoid_walk.example.yaml
-```
-
-Notes:
-- Hydra changes the working directory for runs by default (outputs go under `hydra.run.dir`).
-- This is a minimal prototype; if you'd like, I can convert the `configs/` tree to Hydra config groups.
