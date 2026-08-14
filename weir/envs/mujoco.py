@@ -18,8 +18,8 @@ class MuJoCoSim:
         self._task: Task | None = None
         self._time_limit = float("inf")
 
-    def load(self, robot_config: dict[str, Any], sim_config: dict[str, Any]) -> None:
-        model_path = str(robot_config["model"])
+    def load(self, agent_config: dict[str, Any], sim_config: dict[str, Any]) -> None:
+        model_path = str(agent_config["model"])
         self._model = mujoco.MjModel.from_xml_path(model_path)
         self._data = mujoco.MjData(self._model)
         task_config = sim_config.get("task", {})

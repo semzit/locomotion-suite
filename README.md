@@ -4,7 +4,7 @@
 
 # Weir
 
-Train a simulated legged robot to walk using reinforcement learning. A small, self-contained
+Train a simulated legged agent to walk using reinforcement learning. A small, self-contained
 project: a `SimBackend` and an `AlgorithmPlugin` Protocol, a training loop that never imports a
 concrete implementation, Hydra config, and ONNX policy export.
 
@@ -15,13 +15,13 @@ training loop. Where the run executes is deliberately *not* interchangeable yet.
 ## Quick start
 
 ```bash
-uv run weir-train robot=cartpole task=survive
-uv run weir-train robot=simple_humanoid task=standing   # swap the robot, same pipeline
-uv run weir-train robot=humanoid                        # menagerie humanoid, default task
+uv run weir-train agent=cartpole task=survive
+uv run weir-train agent=simple_humanoid task=standing   # swap the agent, same pipeline
+uv run weir-train agent=humanoid                        # menagerie humanoid, default task
 ```
 
 `train.py` imports only the Protocols; Hydra selects which concrete class satisfies each
-interface from the config groups under `configs/` (`robot/`, `task/`, `sim/`, `algo/`).
+interface from the config groups under `configs/` (`agent/`, `task/`, `sim/`, `algo/`).
 The trained policy exports to a standalone `.onnx` file via `weir/export.py`.
 
 ## Development checks

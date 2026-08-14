@@ -23,17 +23,17 @@ def make_config(overrides: list[str] | None = None) -> DictConfig:
 
 def test_config_composes_defaults() -> None:
     cfg = make_config()
-    assert cfg.robot.name == "cartpole"
+    assert cfg.agent.name == "cartpole"
     assert cfg.task.name == "survive"
     assert cfg.sim.plugin == "mujoco"
     assert cfg.algo.plugin == "ppo"
     assert cfg.train.total_steps == 1000
 
 
-def test_config_robot_override_swaps_model() -> None:
-    cfg = make_config(["robot=simple_humanoid"])
-    assert cfg.robot.name == "simple_humanoid"
-    assert "simple_humanoid.xml" in str(cfg.robot.model)
+def test_config_agent_override_swaps_model() -> None:
+    cfg = make_config(["agent=simple_humanoid"])
+    assert cfg.agent.name == "simple_humanoid"
+    assert "simple_humanoid.xml" in str(cfg.agent.model)
 
 
 def test_config_task_override_applies_params() -> None:

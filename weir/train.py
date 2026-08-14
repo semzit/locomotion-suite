@@ -23,9 +23,9 @@ def check_conformance(sim: SimBackend, algorithm: AlgorithmPlugin) -> None:
 
 def run(cfg: DictConfig) -> dict[str, Any]:
     """Execute a Milestone-1 rollout: step the simulator with the policy, logging shapes."""
-    robot = config_to_dict(cfg.robot)
-    if "model" in robot:
-        robot["model"] = resolve_model_path(str(robot["model"]))
+    agent = config_to_dict(cfg.agent)
+    if "model" in agent:
+        agent["model"] = resolve_model_path(str(agent["model"]))
     sim_config = config_to_dict(cfg.sim)
     task = config_to_dict(cfg.task)
     algorithm_config = config_to_dict(cfg.algo)
@@ -34,7 +34,7 @@ def run(cfg: DictConfig) -> dict[str, Any]:
     algorithm = create_algorithm(str(algorithm_config["plugin"]))
     check_conformance(sim, algorithm)
 
-    sim.load(robot, {**sim_config, "task": task})
+    sim.load(agent, {**sim_config, "task": task})
     observation_shape = sim.observation_shape()
     action_shape = sim.action_shape()
     algorithm.configure(observation_shape, action_shape, algorithm_config)
@@ -47,7 +47,7 @@ def run(cfg: DictConfig) -> dict[str, Any]:
         "rollout.start",
         sim=sim_config["plugin"],
         algo=algorithm_config["plugin"],
-        robot=robot.get("name"),
+        agent=agent.get("name"),
         observation_shape=observation_shape,
         action_shape=action_shape,
         total_steps=total_steps,
