@@ -42,12 +42,16 @@ def test_config_task_override_applies_params() -> None:
     assert cfg.task.params.min_height == 0.8
 
 
-def test_run_trains_a_short_run(caplog: pytest.LogCaptureFixture) -> None:
+def test_run_trains_a_short_run(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     cfg = make_config(["train.total_steps=128", "algo.n_steps=64"])
+    monkeypatch.chdir(tmp_path)
     with caplog.at_level("INFO", logger="weir"):
         result = run(cfg)
 
     assert result["steps"] == 128
+    assert (tmp_path / "checkpoint.zip").exists()
     events = [record.message for record in caplog.records]
     assert "train.start" in events
     assert "train.complete" in events
