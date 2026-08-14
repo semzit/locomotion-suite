@@ -17,6 +17,7 @@ class MuJoCoSim:
         self._data: mujoco.MjData | None = None
         self._task: Task | None = None
         self._time_limit = float("inf")
+        self._renderer: mujoco.Renderer | None = None
 
     def load(self, agent_config: dict[str, Any], sim_config: dict[str, Any]) -> None:
         model_path = str(agent_config["model"])
@@ -71,7 +72,33 @@ class MuJoCoSim:
             high=ctrlrange[:, 1].astype(np.float32),
         )
 
+    def render_frame(self, width: int = 640, height: int = 480) -> np.ndarray:
+        """Render the current state with MuJoCo's offscreen renderer (RGB uint8)."""
+        model = self._require_model()
+        data = self._require_data()
+        if (
+            self._renderer is None
+            or self._renderer.width != width
+            or self._renderer.height != height
+        ):
+            if self._renderer is not None:
+                self._renderer.close()
+            try:
+                self._renderer = mujoco.Renderer(model, height=height, width=width)
+            except Exception as error:
+                self._renderer = None
+                raise RuntimeError(
+                    "Offscreen rendering is unavailable in this environment: could not "
+                    f"create a mujoco.Renderer ({type(error).__name__}: {error})"
+                ) from error
+        mujoco.mj_forward(model, data)
+        self._renderer.update_scene(data)
+        return self._renderer.render()[..., :3].copy()
+
     def close(self) -> None:
+        if self._renderer is not None:
+            self._renderer.close()
+            self._renderer = None
         self._data = None
         self._model = None
 
