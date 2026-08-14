@@ -1,0 +1,20 @@
+<mujoco model="cartpole">
+  <compiler angle="radian"/>
+  <option timestep="0.02" integrator="RK4"/>
+
+  <worldbody>
+    <geom name="track" type="plane" size="2 0.5 0.01" rgba="0.5 0.5 0.5 1"/>
+    <body name="cart" pos="0 0 0.1">
+      <geom name="cart_geom" type="box" size="0.2 0.1 0.1" mass="5"/>
+      <joint name="cart_x" type="slide" axis="1 0 0" range="-3 3" damping="0.1"/>
+      <body name="pole" pos="0 0 0.2">
+        <geom name="pole_geom" type="cylinder" size="0.03 0.5" pos="0 0 0.5" mass="1"/>
+        <joint name="pole_hinge" type="hinge" axis="0 1 0" damping="0.1"/>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor name="cart_motor" joint="cart_x" gear="50"/>
+  </actuator>
+</mujoco>
