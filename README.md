@@ -1,11 +1,16 @@
+<p align="center">
+  <img src="assets/weir-hero.jpg" alt="Weir" width="520" />
+</p>
+
 # Weir
 
 Train a simulated legged robot to walk using reinforcement learning. A small, self-contained
 project: a `SimBackend` and an `AlgorithmPlugin` Protocol, a training loop that never imports a
 concrete implementation, Hydra config, and ONNX policy export.
 
-See [docs/PLAN.md](docs/PLAN.md) for the full plan, [docs/overview.md](docs/overview.md) for the
-short version, and [docs/engineering-rules.md](docs/engineering-rules.md) for engineering rules.
+The simulator and the algorithm are both interchangeable, chosen at the command line rather than
+hardcoded — so you can compare PPO against SAC, or MuJoCo against Isaac Lab, without touching the
+training loop. Where the run executes is deliberately *not* interchangeable yet.
 
 ## Quick start
 
