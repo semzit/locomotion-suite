@@ -9,12 +9,14 @@ description = "Train a simulated legged robot to walk using reinforcement learni
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "gymnasium>=1.3.0",
     "hydra-core>=1.3.2",
     "mujoco>=3.11.0",
     "omegaconf>=2.3,<3.0",
     "onnx>=1.22.0",
     "onnxruntime>=1.28.0",
     "pydantic>=2.0",
+    "stable-baselines3>=2.9.0",
     "torch>=2.13.0",
 ]
 

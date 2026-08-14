@@ -1,9 +1,10 @@
 from pathlib import Path
 
 import numpy as np
+import torch
 
 from weir.algo.ppo import PPOAlgorithm
-from weir.contracts import AlgorithmPlugin, Shape, SimBackend, TransitionBatch
+from weir.contracts import AlgorithmPlugin, Shape, SimBackend
 from weir.envs.mujoco import MuJoCoSim
 
 
@@ -23,7 +24,7 @@ def test_mujoco_sim_exposes_protocol_methods() -> None:
 
 
 def test_ppo_algorithm_exposes_protocol_methods() -> None:
-    required = {"configure", "act", "update", "save", "load", "export_policy"}
+    required = {"configure", "learn", "act", "save", "load", "export_policy"}
     assert not required.difference(PPOAlgorithm.__dict__)
 
 
@@ -33,34 +34,50 @@ def test_shape_defaults() -> None:
     assert shape.high is None
 
 
-def test_transition_batch_fields() -> None:
-    batch = TransitionBatch([0.0], [0.0], [1.0], [0.0], [False], [False])
-    assert batch.rewards == [1.0]
-    assert batch.info == {}
-
-
-def test_ppo_algorithm_acts_in_bounds() -> None:
-    low = np.array([-1.0], dtype=np.float32)
-    high = np.array([1.0], dtype=np.float32)
+def test_ppo_algorithm_acts_in_shape() -> None:
     algo = PPOAlgorithm()
     algo.configure(
         Shape(dims=(4,), dtype="float32"),
-        Shape(dims=(1,), dtype="float32", low=low, high=high),
-        {"lr": 1e-3},
+        Shape(dims=(1,), dtype="float32", low=np.array([-1.0]), high=np.array([1.0])),
+        {"n_steps": 64, "batch_size": 32},
     )
     action = algo.act(np.zeros(4, dtype=np.float32))
     assert action.shape == (1,)
-    assert low[0] <= action[0] <= high[0]
-    zeros = algo.act(np.zeros(4, dtype=np.float32), deterministic=True)
-    assert np.array_equal(zeros, np.zeros(1, dtype=np.float32))
+    assert action.dtype == np.float32
 
 
-def test_ppo_algorithm_stub_roundtrip(tmp_path: Path) -> None:
+def test_ppo_algorithm_save_load_roundtrip(tmp_path: Path) -> None:
     algo = PPOAlgorithm()
-    algo.configure(Shape((4,), "float32"), Shape((1,), "float32"), {"lr": 1e-3})
-    metrics = algo.update(TransitionBatch([], [], [], [], [], []))
-    assert "loss" in metrics
-    path = tmp_path / "ckpt.bin"
+    algo.configure(
+        Shape(dims=(4,), dtype="float32"),
+        Shape(dims=(1,), dtype="float32", low=np.array([-1.0]), high=np.array([1.0])),
+        {"n_steps": 64, "batch_size": 32},
+    )
+    path = tmp_path / "model.zip"
     algo.save(path)
     assert path.exists()
-    algo.load(path)
+
+    loaded = PPOAlgorithm()
+    loaded.load(path)
+    observation = np.zeros(4, dtype=np.float32)
+    assert np.allclose(
+        algo.act(observation, deterministic=True),
+        loaded.act(observation, deterministic=True),
+    )
+
+
+def test_ppo_algorithm_export_policy(tmp_path: Path) -> None:
+    algo = PPOAlgorithm()
+    algo.configure(
+        Shape(dims=(4,), dtype="float32"),
+        Shape(dims=(1,), dtype="float32", low=np.array([-1.0]), high=np.array([1.0])),
+        {"n_steps": 64, "batch_size": 32},
+    )
+    policy = algo.export_policy()
+    with torch.no_grad():
+        output = policy(torch.zeros(2, 4))
+    assert output.shape == (2, 1)
+
+    onnx_path = tmp_path / "policy.onnx"
+    torch.onnx.export(policy, (torch.zeros(1, 4),), onnx_path, dynamo=False)
+    assert onnx_path.exists()

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
 import hydra
 from omegaconf import DictConfig
 
 from weir.contracts import AlgorithmPlugin, SimBackend
+from weir.envs.gym_env import GymEnv
 from weir.factory import create_algorithm, create_sim
 from weir.utils import CONFIG_DIR, config_to_dict, log_event, resolve_model_path
 
@@ -22,7 +24,7 @@ def check_conformance(sim: SimBackend, algorithm: AlgorithmPlugin) -> None:
 
 
 def run(cfg: DictConfig) -> dict[str, Any]:
-    """Execute a Milestone-1 rollout: step the simulator with the policy, logging shapes."""
+    """Train the algorithm on the simulator for the configured number of steps."""
     agent = config_to_dict(cfg.agent)
     if "model" in agent:
         agent["model"] = resolve_model_path(str(agent["model"]))
@@ -40,11 +42,10 @@ def run(cfg: DictConfig) -> dict[str, Any]:
     algorithm.configure(observation_shape, action_shape, algorithm_config)
 
     total_steps = int(cfg.train.total_steps)
-    log_every = int(cfg.train.log_every)
 
     log_event(
         logger,
-        "rollout.start",
+        "train.start",
         sim=sim_config["plugin"],
         algo=algorithm_config["plugin"],
         agent=agent.get("name"),
@@ -53,24 +54,21 @@ def run(cfg: DictConfig) -> dict[str, Any]:
         total_steps=total_steps,
     )
 
-    observation = sim.reset(seed=int(cfg.train.seed))
-    for step in range(total_steps):
-        action = algorithm.act(observation, deterministic=False)
-        result = sim.step(action)
-        if step % log_every == 0:
-            log_event(
-                logger,
-                "rollout.step",
-                step=step,
-                reward=result.reward,
-                terminated=result.terminated,
-                truncated=result.truncated,
-            )
-        observation = sim.reset() if result.terminated or result.truncated else result.observation
+    env = GymEnv(sim)
+    metrics = algorithm.learn(env, total_steps)
 
-    sim.close()
-    log_event(logger, "rollout.complete", steps=total_steps)
-    return {"steps": total_steps}
+    checkpoint = Path.cwd() / "checkpoint.zip"
+    algorithm.save(checkpoint)
+    env.close()
+
+    log_event(
+        logger,
+        "train.complete",
+        steps=total_steps,
+        checkpoint=str(checkpoint),
+        **metrics,
+    )
+    return {"steps": total_steps, **metrics}
 
 
 @hydra.main(version_base=None, config_path=str(CONFIG_DIR), config_name="train")

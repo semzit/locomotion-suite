@@ -27,7 +27,7 @@ def test_config_composes_defaults() -> None:
     assert cfg.task.name == "survive"
     assert cfg.sim.plugin == "mujoco"
     assert cfg.algo.plugin == "ppo"
-    assert cfg.train.total_steps == 1000
+    assert cfg.train.total_steps == 100000
 
 
 def test_config_agent_override_swaps_model() -> None:
@@ -42,15 +42,15 @@ def test_config_task_override_applies_params() -> None:
     assert cfg.task.params.min_height == 0.8
 
 
-def test_run_completes_a_short_rollout(caplog: pytest.LogCaptureFixture) -> None:
-    cfg = make_config(["train.total_steps=5", "train.log_every=5"])
+def test_run_trains_a_short_run(caplog: pytest.LogCaptureFixture) -> None:
+    cfg = make_config(["train.total_steps=128", "algo.n_steps=64"])
     with caplog.at_level("INFO", logger="weir"):
         result = run(cfg)
 
-    assert result["steps"] == 5
+    assert result["steps"] == 128
     events = [record.message for record in caplog.records]
-    assert "rollout.start" in events
-    assert "rollout.complete" in events
+    assert "train.start" in events
+    assert "train.complete" in events
     assert caplog.records[0].sim == "mujoco"
     assert caplog.records[0].algo == "ppo"
 

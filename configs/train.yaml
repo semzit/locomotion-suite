@@ -7,5 +7,8 @@ defaults:
 
 train:
   seed: 0
-  total_steps: 1000
-  log_every: 100
+  total_steps: 100000
+
+hydra:
+  job:
+    chdir: true

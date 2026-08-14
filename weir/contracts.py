@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 import numpy as np
+from gymnasium import Env
 
 if TYPE_CHECKING:
     from torch import nn
@@ -47,7 +48,12 @@ class SimBackend(Protocol):
 
 @runtime_checkable
 class AlgorithmPlugin(Protocol):
-    """Learning and policy boundary."""
+    """Learning and policy boundary.
+
+    Each implementation owns its training loop via ``learn`` (an SB3-backed
+    implementation calls ``model.learn``; a hand-written one would collect its
+    own rollouts). ``act`` is used for evaluation and recording.
+    """
 
     def configure(
         self,
@@ -55,22 +61,8 @@ class AlgorithmPlugin(Protocol):
         action_shape: Shape,
         config: dict[str, Any],
     ) -> None: ...
+    def learn(self, env: Env, total_steps: int) -> dict[str, float]: ...
     def act(self, observations: Any, deterministic: bool = False) -> Any: ...
-    def update(self, batch: TransitionBatch) -> dict[str, float]: ...
     def save(self, path: Path) -> None: ...
     def load(self, path: Path) -> None: ...
     def export_policy(self) -> nn.Module: ...
-
-
-@dataclass(slots=True)
-class TransitionBatch:
-    """Simulator-to-algorithm wire format."""
-
-    observations: Any
-    actions: Any
-    rewards: Any
-    next_observations: Any
-    terminated: Any
-    truncated: Any
-    info: dict[str, Any] = field(default_factory=dict)
-    metadata: dict[str, Any] = field(default_factory=dict)
