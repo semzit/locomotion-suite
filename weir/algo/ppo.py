@@ -3,10 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
+
 if TYPE_CHECKING:
     from torch import nn
 
-from weir.contracts import TransitionBatch
+from weir.algo.utils import sample_action
+from weir.contracts import Shape, TransitionBatch
 
 
 class PPOAlgorithm:
@@ -14,8 +17,8 @@ class PPOAlgorithm:
 
     def configure(
         self,
-        observation_shape: dict[str, Any],
-        action_shape: dict[str, Any],
+        observation_shape: Shape,
+        action_shape: Shape,
         config: dict[str, Any],
     ) -> None:
         self.observation_shape = observation_shape
@@ -23,11 +26,12 @@ class PPOAlgorithm:
         self.config = config
 
     def act(self, observations: Any, deterministic: bool = False) -> Any:
-        _ = deterministic
-        return observations
+        return sample_action(
+            self.action_shape, np.random.default_rng(), deterministic=deterministic
+        )
 
     def update(self, batch: TransitionBatch) -> dict[str, float]:
-        return {"loss": 0.0, "reward": 0.0 if not batch else 0.0}
+        return {"loss": 0.0, "reward": 0.0}
 
     def save(self, path: Path) -> None:
         path.write_text("ppo-checkpoint", encoding="utf-8")

@@ -8,11 +8,9 @@ from omegaconf import DictConfig
 
 from weir.contracts import AlgorithmPlugin, SimBackend
 from weir.factory import create_algorithm, create_sim
-from weir.utils import ROOT, config_to_dict, log_event, resolve_model_path
+from weir.utils import CONFIG_DIR, config_to_dict, log_event, resolve_model_path
 
 logger = logging.getLogger("weir")
-
-CONFIG_DIR = str(ROOT / "configs")
 
 
 def check_conformance(sim: SimBackend, algorithm: AlgorithmPlugin) -> None:
@@ -55,7 +53,7 @@ def run(cfg: DictConfig) -> dict[str, Any]:
         total_steps=total_steps,
     )
 
-    observation = sim.reset(batch_size=1)
+    observation = sim.reset(seed=int(cfg.train.seed))
     for step in range(total_steps):
         action = algorithm.act(observation, deterministic=False)
         result = sim.step(action)
@@ -64,16 +62,18 @@ def run(cfg: DictConfig) -> dict[str, Any]:
                 logger,
                 "rollout.step",
                 step=step,
-                reward=result.get("reward", 0.0),
-                done=result.get("done", False),
+                reward=result.reward,
+                terminated=result.terminated,
+                truncated=result.truncated,
             )
+        observation = sim.reset() if result.terminated or result.truncated else result.observation
 
     sim.close()
     log_event(logger, "rollout.complete", steps=total_steps)
     return {"steps": total_steps}
 
 
-@hydra.main(version_base=None, config_path=CONFIG_DIR, config_name="train")
+@hydra.main(version_base=None, config_path=str(CONFIG_DIR), config_name="train")
 def main(cfg: DictConfig) -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     run(cfg)

@@ -10,9 +10,10 @@ from omegaconf import DictConfig
 from weir.algo.ppo import PPOAlgorithm
 from weir.envs.mujoco import MuJoCoSim
 from weir.train import check_conformance, run
+from weir.utils import CONFIG_DIR
 
 ROOT = Path(__file__).parents[2]
-CONFIG_RELATIVE = str(Path(os.path.relpath(ROOT / "configs", Path(__file__).parent)))
+CONFIG_RELATIVE = str(Path(os.path.relpath(CONFIG_DIR, Path(__file__).parent)))
 
 
 def make_config(overrides: list[str] | None = None) -> DictConfig:

@@ -4,19 +4,44 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
+import numpy as np
+
 if TYPE_CHECKING:
     from torch import nn
+
+Observation = np.ndarray
+Action = np.ndarray
+
+
+@dataclass(frozen=True, slots=True)
+class Shape:
+    """Dimensions, dtype, and optional per-dimension bounds of an observation or action space."""
+
+    dims: tuple[int, ...]
+    dtype: str
+    low: np.ndarray | None = None
+    high: np.ndarray | None = None
+
+
+@dataclass(slots=True)
+class SimStep:
+    """One simulator transition: next observation plus reward and termination flags."""
+
+    observation: Observation
+    reward: float
+    terminated: bool
+    truncated: bool
 
 
 @runtime_checkable
 class SimBackend(Protocol):
     """Simulator boundary: reset/step a physics model and describe its interface."""
 
-    def load(self, robot_spec: dict[str, Any], sim_config: dict[str, Any]) -> None: ...
-    def reset(self, batch_size: int) -> Any: ...
-    def step(self, actions: Any) -> Any: ...
-    def observation_shape(self) -> dict[str, Any]: ...
-    def action_shape(self) -> dict[str, Any]: ...
+    def load(self, robot_config: dict[str, Any], sim_config: dict[str, Any]) -> None: ...
+    def reset(self, seed: int | None = None) -> Observation: ...
+    def step(self, actions: Action) -> SimStep: ...
+    def observation_shape(self) -> Shape: ...
+    def action_shape(self) -> Shape: ...
     def close(self) -> None: ...
 
 
@@ -26,8 +51,8 @@ class AlgorithmPlugin(Protocol):
 
     def configure(
         self,
-        observation_shape: dict[str, Any],
-        action_shape: dict[str, Any],
+        observation_shape: Shape,
+        action_shape: Shape,
         config: dict[str, Any],
     ) -> None: ...
     def act(self, observations: Any, deterministic: bool = False) -> Any: ...
