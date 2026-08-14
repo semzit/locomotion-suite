@@ -1,4 +1,0 @@
-compute:
-  plugin: local
-  device: cpu
-  workers: 1

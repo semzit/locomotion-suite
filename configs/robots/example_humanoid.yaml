@@ -1,3 +1,0 @@
-robot:
-  name: example_humanoid
-  control_rate_hz: 50

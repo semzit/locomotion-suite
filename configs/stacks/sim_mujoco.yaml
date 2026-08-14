@@ -1,4 +1,0 @@
-sim:
-  plugin: mujoco
-  robot: robots/example_humanoid.yaml
-  task: tasks/walk_forward.yaml
