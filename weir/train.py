@@ -9,10 +9,19 @@ from omegaconf import DictConfig
 
 from weir.contracts import AlgorithmPlugin, SimBackend
 from weir.envs.gym.gym_env import GymEnv
+from weir.envs.randomized import RandomizedSim
 from weir.factory import create_algorithm, create_sim
 from weir.utils import CONFIG_DIR, config_to_dict, log_event, resolve_model_path
 
 logger = logging.getLogger("weir")
+
+
+def build_sim(sim_config: dict[str, Any]) -> SimBackend:
+    """Construct the simulator named in config, wrapping it when hardened."""
+    sim = create_sim(str(sim_config["plugin"]))
+    if sim_config.get("robust", False):
+        sim = RandomizedSim(sim, sim_config.get("randomization", {}))
+    return sim
 
 
 def check_conformance(sim: SimBackend, algorithm: AlgorithmPlugin) -> None:
@@ -32,7 +41,7 @@ def run(cfg: DictConfig) -> dict[str, Any]:
     task = config_to_dict(cfg.task)
     algorithm_config = config_to_dict(cfg.algo)
 
-    sim = create_sim(str(sim_config["plugin"]))
+    sim = build_sim(sim_config)
     algorithm = create_algorithm(str(algorithm_config["plugin"]))
     check_conformance(sim, algorithm)
 
