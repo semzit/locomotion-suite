@@ -4,11 +4,20 @@ import logging
 from pathlib import Path
 from typing import Any, cast
 
+import numpy as np
 from omegaconf import OmegaConf
+
+from weir.contracts import Shape
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_DIR = ROOT / "weir"
 CONFIG_DIR = ROOT / "configs"
+MODELS_DIR = PACKAGE_DIR / "models"
+
+
+def resolve_model_asset(name: str) -> str:
+    """Resolve a bare model file name (or relative path) under the models dir."""
+    return str((MODELS_DIR / name).resolve())
 
 
 def resolve_model_path(path: str) -> str:
@@ -17,6 +26,24 @@ def resolve_model_path(path: str) -> str:
     if model_path.is_absolute():
         return str(model_path)
     return str((ROOT / model_path).resolve())
+
+
+def sample_action(
+    action_shape: Shape,
+    rng: np.random.Generator,
+    deterministic: bool = False,
+) -> np.ndarray:
+    """Sample an in-bounds action, or its midpoint when deterministic."""
+    dims = tuple(action_shape.dims)
+    low = action_shape.low
+    high = action_shape.high
+    if low is not None and high is not None:
+        if deterministic:
+            return ((low + high) / 2.0).astype(np.float32)
+        return rng.uniform(low, high, size=dims).astype(np.float32)
+    if deterministic:
+        return np.zeros(dims, dtype=np.float32)
+    return rng.uniform(-1.0, 1.0, size=dims).astype(np.float32)
 
 
 def config_to_dict(section: Any) -> dict[str, Any]:

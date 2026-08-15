@@ -4,10 +4,17 @@ from pathlib import Path
 import numpy as np
 from omegaconf import DictConfig
 
-from weir.algo.utils import sample_action
 from weir.contracts import Shape
-from weir.envs.sim.utils import MODELS_DIR, resolve_model_asset
-from weir.utils import CONFIG_DIR, ROOT, config_to_dict, log_event, resolve_model_path
+from weir.utils import (
+    CONFIG_DIR,
+    MODELS_DIR,
+    ROOT,
+    config_to_dict,
+    log_event,
+    resolve_model_asset,
+    resolve_model_path,
+    sample_action,
+)
 
 
 def test_root_aligns_with_repo() -> None:

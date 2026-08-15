@@ -5,7 +5,7 @@ import numpy as np
 from weir.contracts import DomainRandomizable, SimBackend
 from weir.envs.randomized import RandomizedSim
 from weir.envs.sim.mujoco import MuJoCoSim
-from weir.envs.sim.utils import MODELS_DIR
+from weir.utils import MODELS_DIR
 
 CART_POLE = MODELS_DIR / "cartpole.xml"
 SIMPLE_HUMANOID = MODELS_DIR / "simple_humanoid.xml"
