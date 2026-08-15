@@ -78,7 +78,12 @@ class MuJoCoSim(SimBackend):
         )
 
     def render_frame(self, width: int = 640, height: int = 480) -> np.ndarray:
-        """Render the current state with MuJoCo's offscreen renderer (RGB uint8)."""
+        """Render the current state with MuJoCo's offscreen renderer (RGB uint8).
+
+        Follows the root body with the camera and injects a directional light
+        for models that define none (MuJoCo's default scene light is a
+        zero-intensity headlight, which renders everything as dark silhouettes).
+        """
         model = self._require_model()
         data = self._require_data()
         if (
@@ -96,8 +101,24 @@ class MuJoCoSim(SimBackend):
                     "Offscreen rendering is unavailable in this environment: could not "
                     f"create a mujoco.Renderer ({type(error).__name__}: {error})"
                 ) from error
+        camera = mujoco.MjvCamera()
+        mujoco.mjv_defaultCamera(camera)
+        camera.lookat = data.body(1).xpos.copy()  # root body
+        camera.distance = 3.0
+        camera.azimuth = 90
+        camera.elevation = -20
         mujoco.mj_forward(model, data)
-        self._renderer.update_scene(data)
+        self._renderer.update_scene(data, camera=camera)
+        if model.nlight == 0:
+            light = self._renderer.scene.lights[0]
+            light.type = 1  # directional
+            light.headlight = 0
+            light.intensity = 1.0
+            light.pos = np.array([0.0, 0.0, 6.0])
+            light.dir = np.array([0.0, 0.0, -1.0])
+            light.diffuse = np.array([1.0, 1.0, 1.0])
+            light.specular = np.array([0.5, 0.5, 0.5])
+            light.ambient = np.array([0.3, 0.3, 0.3])
         return self._renderer.render()[..., :3].copy()
 
     def close(self) -> None:
