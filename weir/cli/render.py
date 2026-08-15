@@ -10,7 +10,7 @@ import imageio.v2 as imageio
 from weir.core.contracts import AlgorithmPlugin
 from weir.core.factory import create_algorithm
 from weir.core.utils import resolve_model_path
-from weir.envs.sim.mujoco import MuJoCoSim
+from weir.envs.backends.mujoco import MuJoCoSim
 
 
 def render_episode(

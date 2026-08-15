@@ -5,7 +5,7 @@ import torch
 
 from weir.algo.ppo import PPOAlgorithm
 from weir.core.contracts import AlgorithmPlugin, Shape, SimBackend
-from weir.envs.sim.mujoco import MuJoCoSim
+from weir.envs.backends.mujoco import MuJoCoSim
 
 
 def _assert_conformance(sim: SimBackend, algo: AlgorithmPlugin) -> None:

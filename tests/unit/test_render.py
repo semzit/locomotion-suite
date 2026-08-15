@@ -10,7 +10,7 @@ from weir.cli.render import main as render_main
 from weir.cli.render import render_episode
 from weir.core.factory import create_algorithm
 from weir.core.utils import MODELS_DIR
-from weir.envs.sim.mujoco import MuJoCoSim
+from weir.envs.backends.mujoco import MuJoCoSim
 
 CART_POLE = MODELS_DIR / "cartpole.xml"
 

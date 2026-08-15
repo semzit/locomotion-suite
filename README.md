@@ -20,9 +20,15 @@ uv run weir-train agent=simple_humanoid task=standing   # swap the agent, same p
 uv run weir-train agent=humanoid                        # menagerie humanoid, default task
 ```
 
-`train.py` imports only the Protocols; Hydra selects which concrete class satisfies each
+`weir/cli/train.py` imports only the Protocols; Hydra selects which concrete class satisfies each
 interface from the config groups under `configs/` (`agent/`, `task/`, `sim/`, `algo/`).
-The trained policy exports to a standalone `.onnx` file via `weir/export.py`.
+Sibling entry points round out the workflow:
+
+```bash
+uv run weir-eval --checkpoint checkpoint.zip        # rollout metrics on a trained policy
+uv run weir-export --checkpoint checkpoint.zip      # export the policy to standalone .onnx
+python -m weir.cli.render --model weir/models/humanoid.xml   # render a rollout to mp4
+```
 
 ## Development checks
 

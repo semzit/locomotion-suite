@@ -9,7 +9,7 @@ from hypothesis import strategies as st
 
 from weir.core.contracts import SimStep
 from weir.core.utils import MODELS_DIR
-from weir.envs.sim.mujoco import MuJoCoSim
+from weir.envs.backends.mujoco import MuJoCoSim
 
 MODELS = MODELS_DIR
 CART_POLE = MODELS / "cartpole.xml"

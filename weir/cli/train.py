@@ -10,8 +10,8 @@ from omegaconf import DictConfig
 from weir.core.contracts import AlgorithmPlugin, SimBackend
 from weir.core.factory import create_algorithm, create_sim
 from weir.core.utils import CONFIG_DIR, config_to_dict, log_event, resolve_model_path
-from weir.envs.gym.gym_env import GymEnv
-from weir.envs.sim.randomized import RandomizedSim
+from weir.envs.gym_env import GymEnv
+from weir.envs.wrappers.randomized import RandomizedSim
 
 logger = logging.getLogger("weir")
 

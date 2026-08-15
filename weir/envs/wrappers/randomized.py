@@ -44,10 +44,11 @@ class RandomizedSim:
         action = self._add_action_noise(action)
         action = self._apply_latency(action)
         inner = self._inner
+        perturbation_force = float(self._config.get("perturbation_force", 0.0))
         if isinstance(inner, DomainRandomizable):
-            self._maybe_perturb(inner)
+            self._maybe_perturb(inner, perturbation_force)
         result = inner.step(action)
-        if isinstance(inner, DomainRandomizable) and self._perturbation_force() > 0:
+        if isinstance(inner, DomainRandomizable) and perturbation_force > 0:
             inner.apply_perturbation(np.zeros(3))
         observation = self._add_observation_noise(result.observation)
         return SimStep(
@@ -102,12 +103,8 @@ class RandomizedSim:
             return np.zeros_like(action)
         return self._latency.popleft()
 
-    def _maybe_perturb(self, inner: DomainRandomizable) -> None:
-        force = self._perturbation_force()
+    def _maybe_perturb(self, inner: DomainRandomizable, force: float) -> None:
         prob = float(self._config.get("perturbation_prob", 0.0))
         if force <= 0 or self._rng.random() >= prob:
             return
         inner.apply_perturbation(self._rng.normal(0.0, force, size=3))
-
-    def _perturbation_force(self) -> float:
-        return float(self._config.get("perturbation_force", 0.0))
