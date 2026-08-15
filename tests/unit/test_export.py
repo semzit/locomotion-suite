@@ -9,7 +9,7 @@ import pytest
 import torch
 from torch import nn
 
-from weir.contracts import Shape, TransitionBatch
+from weir.contracts import Shape
 from weir.export import export_policy_to_onnx, main, verify_export
 
 OBS_DIM = 4
@@ -42,9 +42,6 @@ class FakeAlgorithm:
 
     def act(self, observations: Any, deterministic: bool = False) -> Any:
         return np.zeros((1, ACTION_DIM), dtype=np.float32)
-
-    def update(self, batch: TransitionBatch) -> dict[str, float]:
-        return {"loss": 0.0}
 
     def save(self, path: Path) -> None:
         Path(path).write_text("fake-checkpoint", encoding="utf-8")

@@ -8,7 +8,7 @@ from typing import Any
 import imageio.v2 as imageio
 
 from weir.contracts import AlgorithmPlugin
-from weir.envs.mujoco import MuJoCoSim
+from weir.envs.sim.mujoco import MuJoCoSim
 from weir.factory import create_algorithm
 from weir.utils import resolve_model_path
 

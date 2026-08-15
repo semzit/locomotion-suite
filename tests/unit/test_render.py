@@ -6,8 +6,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from weir.envs.mujoco import MuJoCoSim
-from weir.envs.utils import MODELS_DIR
+from weir.envs.sim.mujoco import MuJoCoSim
+from weir.envs.sim.utils import MODELS_DIR
 from weir.factory import create_algorithm
 from weir.render import main as render_main
 from weir.render import render_episode
