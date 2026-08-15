@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Any, SupportsFloat
 
-import numpy as np
-from gymnasium import Env, spaces
+from gymnasium import Env
 
-from weir.core.contracts import Action, Observation, Shape, SimBackend
+from weir.core.contracts import Action, Observation, SimBackend
+from weir.envs.utils import shape_to_box
 
 
 class GymEnv(Env):
@@ -36,10 +36,3 @@ class GymEnv(Env):
     @property
     def sim(self) -> SimBackend:
         return self._sim
-
-
-def shape_to_box(shape: Shape) -> spaces.Box:
-    """Build a gymnasium Box space from a Shape (unbounded when low/high are absent)."""
-    low = shape.low if shape.low is not None else -np.inf
-    high = shape.high if shape.high is not None else np.inf
-    return spaces.Box(low=low, high=high, shape=shape.dims, dtype=np.float32)

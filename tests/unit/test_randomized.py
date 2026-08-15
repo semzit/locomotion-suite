@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 
 from weir.core.contracts import DomainRandomizable, SimBackend
-from weir.core.utils import MODELS_DIR
 from weir.envs.backends.mujoco import MuJoCoSim
+from weir.envs.utils import MODELS_DIR
 from weir.envs.wrappers.randomized import RandomizedSim
 
 CART_POLE = MODELS_DIR / "cartpole.xml"

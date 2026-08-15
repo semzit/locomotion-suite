@@ -4,25 +4,15 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import torch
 from gymnasium import Env
 from stable_baselines3 import PPO
-from stable_baselines3.common.policies import ActorCriticPolicy
 from torch import nn
 
-from weir.core.contracts import Shape
-from weir.envs.gym_env import shape_to_box
+from weir.algo.utils import DeterministicPolicy, SpacesOnly
+from weir.core.contracts import AlgorithmPlugin, Shape
 
 
-class _SpacesOnly(Env):
-    """Minimal env exposing only the spaces SB3 needs to build its policy."""
-
-    def __init__(self, observation_shape: Shape, action_shape: Shape) -> None:
-        self.observation_space = shape_to_box(observation_shape)
-        self.action_space = shape_to_box(action_shape)
-
-
-class PPOAlgorithm:
+class PPOAlgorithm(AlgorithmPlugin):
     """PPO via stable-baselines3, exposed behind the AlgorithmPlugin protocol."""
 
     def configure(
@@ -36,7 +26,7 @@ class PPOAlgorithm:
         net_arch = list(config.get("net_arch", [64, 64]))
         self._model = PPO(
             "MlpPolicy",
-            _SpacesOnly(observation_shape, action_shape),
+            SpacesOnly(observation_shape, action_shape),
             policy_kwargs={"net_arch": net_arch},
             learning_rate=float(config.get("learning_rate", 3e-4)),
             n_steps=int(config.get("n_steps", 2048)),
@@ -72,20 +62,8 @@ class PPOAlgorithm:
 
     def export_policy(self) -> nn.Module:
         self._require_model()
-        return _DeterministicPolicy(self._model.policy)
+        return DeterministicPolicy(self._model.policy)
 
     def _require_model(self) -> None:
         if getattr(self, "_model", None) is None:
             raise RuntimeError("PPOAlgorithm.configure() must be called before use")
-
-
-class _DeterministicPolicy(nn.Module):
-    """Inference-only wrapper: forward maps observations to deterministic mean actions."""
-
-    def __init__(self, policy: ActorCriticPolicy) -> None:
-        super().__init__()
-        self.policy = policy
-
-    def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        actions, _, _ = self.policy(observations, deterministic=True)
-        return actions

@@ -9,8 +9,8 @@ import pytest
 from weir.cli.render import main as render_main
 from weir.cli.render import render_episode
 from weir.core.factory import create_algorithm
-from weir.core.utils import MODELS_DIR
 from weir.envs.backends.mujoco import MuJoCoSim
+from weir.envs.utils import MODELS_DIR
 
 CART_POLE = MODELS_DIR / "cartpole.xml"
 

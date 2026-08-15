@@ -11,6 +11,7 @@ import onnxruntime as ort
 import torch
 from torch import nn
 
+from weir.cli.utils import setup_logging
 from weir.core.factory import create_algorithm
 from weir.core.utils import log_event
 
@@ -112,7 +113,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    setup_logging()
     try:
         output_path = run_export(
             args.checkpoint,

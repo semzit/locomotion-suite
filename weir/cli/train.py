@@ -7,6 +7,7 @@ from typing import Any
 import hydra
 from omegaconf import DictConfig
 
+from weir.cli.utils import setup_logging
 from weir.core.contracts import AlgorithmPlugin, SimBackend
 from weir.core.factory import create_algorithm, create_sim
 from weir.core.utils import CONFIG_DIR, config_to_dict, log_event, resolve_model_path
@@ -82,7 +83,7 @@ def run(cfg: DictConfig) -> dict[str, Any]:
 
 @hydra.main(version_base=None, config_path=str(CONFIG_DIR), config_name="train")
 def main(cfg: DictConfig) -> None:
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    setup_logging()
     run(cfg)
 
 

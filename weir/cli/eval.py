@@ -2,27 +2,17 @@ from __future__ import annotations
 
 import argparse
 import logging
-import os
 import sys
 from pathlib import Path
 
 import numpy as np
-from hydra import compose, initialize
-from omegaconf import DictConfig
 
+from weir.cli.utils import compose_config, setup_logging
 from weir.core.contracts import AlgorithmPlugin, SimBackend
 from weir.core.factory import create_algorithm, create_sim
-from weir.core.utils import CONFIG_DIR, config_to_dict, log_event, resolve_model_path
+from weir.core.utils import config_to_dict, log_event, resolve_model_path
 
 logger = logging.getLogger("weir")
-
-CONFIG_RELATIVE = str(os.path.relpath(CONFIG_DIR, Path(__file__).parent))
-
-
-def compose_config(agent: str, task: str) -> DictConfig:
-    """Compose the train config with the requested agent and task groups."""
-    with initialize(version_base=None, config_path=CONFIG_RELATIVE):
-        return compose(config_name="train", overrides=[f"agent={agent}", f"task={task}"])
 
 
 def rollout_metrics(
@@ -126,7 +116,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    setup_logging()
     try:
         metrics = run_eval(
             args.checkpoint,
