@@ -59,6 +59,26 @@ def test_run_trains_a_short_run(
     assert caplog.records[0].algo == "ppo"
 
 
+def test_run_resumes_from_checkpoint(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    run(make_config(["train.total_steps=32", "algo.n_steps=32"]))
+    checkpoint = tmp_path / "checkpoint.zip"
+    assert checkpoint.exists()
+
+    cfg = make_config(
+        [
+            "train.total_steps=32",
+            "algo.n_steps=32",
+            f"algo.checkpoint={checkpoint}",
+        ]
+    )
+    resume_dir = tmp_path / "resume"
+    resume_dir.mkdir()
+    monkeypatch.chdir(resume_dir)
+    result = run(cfg)
+    assert result["steps"] == 32
+
+
 def test_build_sim_wraps_when_robust() -> None:
     assert isinstance(build_sim({"plugin": "mujoco"}), MuJoCoSim)
     hardened = build_sim({"plugin": "mujoco", "robust": True, "randomization": {}})

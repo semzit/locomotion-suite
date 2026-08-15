@@ -23,6 +23,10 @@ class PPOAlgorithm(AlgorithmPlugin):
     ) -> None:
         self.observation_shape = observation_shape
         self.action_shape = action_shape
+        checkpoint = config.get("checkpoint")
+        if checkpoint:
+            self._model = PPO.load(str(checkpoint))
+            return
         net_arch = list(config.get("net_arch", [64, 64]))
         self._model = PPO(
             "MlpPolicy",
