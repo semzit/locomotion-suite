@@ -10,6 +10,7 @@ import imageio.v2 as imageio
 from weir.cli.utils import add_seed_arg
 from weir.core.contracts import AlgorithmPlugin
 from weir.core.factory import create_algorithm
+from weir.core.run import Run
 from weir.core.utils import resolve_model_path
 from weir.envs.backends.mujoco import MuJoCoSim
 
@@ -43,8 +44,10 @@ def build_parser() -> argparse.ArgumentParser:
         prog="weir-render",
         description="Render a MuJoCo rollout to an mp4 video.",
     )
-    parser.add_argument("--model", default="weir/models/cartpole.xml")
-    parser.add_argument("--task", default="survive")
+    parser.add_argument(
+        "--model", default=None, help="Model XML path; defaults to the run's manifest."
+    )
+    parser.add_argument("--task", default=None, help="Task name; defaults to the run's manifest.")
     parser.add_argument(
         "--task-param",
         action="append",
@@ -84,20 +87,37 @@ def _parse_task_params(entries: list[str]) -> dict[str, object]:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    run = Run.open(args.checkpoint) if args.checkpoint else None
+    overridden = args.model or args.task or args.task_param
     sim = MuJoCoSim()
     try:
-        sim.load(
-            {"name": "render", "model": resolve_model_path(args.model)},
-            {
-                "task": {"name": args.task, "params": _parse_task_params(args.task_param)},
-                "time_limit": args.time_limit,
-            },
-        )
-        algo = create_algorithm(args.algo)
-        if args.checkpoint:
-            algo.load(args.checkpoint)
+        if run is not None and run.config is not None and not overridden:
+            sim = run.sim()
+            run.validate(sim)
+            if not isinstance(sim, MuJoCoSim):
+                raise ValueError(
+                    f"Render requires a MuJoCoSim, but the manifest uses {type(sim).__name__}"
+                )
+            algo = run.algorithm()
         else:
-            algo.configure(sim.observation_shape(), sim.action_shape(), {})
+            model = args.model or "weir/models/cartpole.xml"
+            sim.load(
+                {"name": "render", "model": resolve_model_path(model)},
+                {
+                    "task": {
+                        "name": args.task or "survive",
+                        "params": _parse_task_params(args.task_param),
+                    },
+                    "time_limit": args.time_limit,
+                },
+            )
+            if run is not None:
+                run.validate(sim)
+            algo = create_algorithm(args.algo)
+            if args.checkpoint:
+                algo.load(args.checkpoint)
+            else:
+                algo.configure(sim.observation_shape(), sim.action_shape(), {})
         output_path = render_episode(
             sim,
             algo,

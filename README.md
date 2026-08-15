@@ -17,16 +17,19 @@ Train, evaluate, record, and export a walking policy:
 uv run weir-train agent=simple_humanoid task=walk_forward
 
 # 2. Evaluate the trained policy (mean reward, episode length, forward distance)
-uv run weir-eval --checkpoint outputs/2026-08-14/<run>/checkpoint.zip \
-  --agent simple_humanoid --task walk_forward
+uv run weir-eval --checkpoint outputs/2026-08-15/<run>/checkpoint.zip
 
 # 3. Record an mp4 of the policy walking
-uv run weir-render --model weir/models/simple_humanoid.xml \
-  --task walk_forward --checkpoint outputs/2026-08-14/<run>/checkpoint.zip --output walk.mp4
+uv run weir-render --checkpoint outputs/2026-08-15/<run>/checkpoint.zip --output walk.mp4
 
 # 4. Export the policy to a standalone .onnx file
-uv run weir-export --checkpoint outputs/2026-08-14/<run>/checkpoint.zip --obs-dim 25
+uv run weir-export --checkpoint outputs/2026-08-15/<run>/checkpoint.zip
 ```
+
+Every run writes a manifest (`checkpoint.meta.json`) next to the checkpoint recording the
+resolved configuration and observation/action shapes. `weir-eval`, `weir-render`, and
+`weir-export` rebuild the environment from it, so a checkpoint can't be paired with the
+wrong model — no flags needed. Flags remain as overrides where useful.
 
 `weir/cli/train.py` imports only the Protocols; Hydra selects which concrete class satisfies each
 interface from the config groups under `configs/` (`agent/`, `task/`, `sim/`, `algo/`).

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 from typing import Any
@@ -8,21 +9,45 @@ import hydra
 from omegaconf import DictConfig
 
 from weir.cli.utils import setup_logging
-from weir.core.contracts import SimBackend
-from weir.core.factory import create_algorithm, create_sim
+from weir.core.contracts import Shape
+from weir.core.factory import create_algorithm
+from weir.core.run import MANIFEST_NAME, build_sim
 from weir.core.utils import CONFIG_DIR, config_to_dict, log_event, resolve_model_path
 from weir.envs.gym_env import GymEnv
-from weir.envs.wrappers.randomized import RandomizedSim
 
 logger = logging.getLogger("weir")
 
 
-def build_sim(sim_config: dict[str, Any]) -> SimBackend:
-    """Construct the simulator named in config, wrapping it when hardened."""
-    sim = create_sim(str(sim_config["plugin"]))
-    if sim_config.get("robust", False):
-        sim = RandomizedSim(sim, sim_config.get("randomization", {}))
-    return sim
+def _shape_record(shape: Shape) -> dict[str, object]:
+    return {"dims": list(shape.dims), "dtype": shape.dtype}
+
+
+def write_manifest(
+    checkpoint: Path,
+    *,
+    agent: dict[str, Any],
+    task: dict[str, Any],
+    sim_config: dict[str, Any],
+    algorithm_config: dict[str, Any],
+    seed: int,
+    total_steps: int,
+    observation_shape: Shape,
+    action_shape: Shape,
+) -> Path:
+    """Write the run manifest so downstream tools can rebuild the environment."""
+    manifest = checkpoint.with_name(MANIFEST_NAME)
+    payload = {
+        "version": 1,
+        "agent": agent,
+        "task": task,
+        "sim": sim_config,
+        "algo": algorithm_config,
+        "train": {"seed": seed, "total_steps": total_steps},
+        "observation_shape": _shape_record(observation_shape),
+        "action_shape": _shape_record(action_shape),
+    }
+    manifest.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return manifest
 
 
 def run(cfg: DictConfig) -> dict[str, Any]:
@@ -62,6 +87,17 @@ def run(cfg: DictConfig) -> dict[str, Any]:
 
     checkpoint = Path.cwd() / "checkpoint.zip"
     algorithm.save(checkpoint)
+    write_manifest(
+        checkpoint,
+        agent=agent,
+        task=task,
+        sim_config=sim_config,
+        algorithm_config=algorithm_config,
+        seed=int(cfg.train.seed),
+        total_steps=total_steps,
+        observation_shape=observation_shape,
+        action_shape=action_shape,
+    )
     env.close()
 
     log_event(

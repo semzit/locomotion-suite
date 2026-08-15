@@ -11,6 +11,7 @@ from torch import nn
 
 from weir.cli.utils import add_checkpoint_arg, guarded_main
 from weir.core.factory import create_algorithm
+from weir.core.run import Run
 
 DEFAULT_OPSET = 17
 
@@ -69,19 +70,26 @@ def run_export(
     checkpoint: Path,
     output_path: Path,
     *,
-    algo: str = "ppo",
-    obs_dim: int = 4,
+    algo: str | None = None,
+    obs_dim: int | None = None,
     batch: int = 1,
     samples: int = 5,
 ) -> Path:
-    """Load a checkpoint, export its policy to ONNX, and verify onnxruntime parity."""
-    algorithm = create_algorithm(algo)
+    """Load a checkpoint, export its policy to ONNX, and verify onnxruntime parity.
+
+    The algorithm plugin and observation dimension come from the run manifest
+    unless explicitly overridden.
+    """
+    run = Run.open(checkpoint)
+    plugin = algo or run.plugin("algo") or "ppo"
+    dim = obs_dim if obs_dim is not None else run.obs_dim() or 4
+    algorithm = create_algorithm(plugin)
     algorithm.load(Path(checkpoint))
     policy = algorithm.export_policy()
     if not isinstance(policy, nn.Module):
         raise TypeError(f"{type(policy).__name__} is not a torch.nn.Module")
-    onnx_path = export_policy_to_onnx(policy, output_path, obs_dim=obs_dim, batch=batch)
-    if not verify_export(policy, onnx_path, obs_dim=obs_dim, batch=batch, samples=samples):
+    onnx_path = export_policy_to_onnx(policy, output_path, obs_dim=dim, batch=batch)
+    if not verify_export(policy, onnx_path, obs_dim=dim, batch=batch, samples=samples):
         raise RuntimeError(
             f"ONNX model at {onnx_path} failed verification against the PyTorch policy"
         )
@@ -96,9 +104,16 @@ def main() -> int:
     parser.add_argument(
         "--output", type=Path, default=Path("policy.onnx"), help="Output ONNX file path."
     )
-    parser.add_argument("--algo", default="ppo", help="Algorithm name registered in the factory.")
     parser.add_argument(
-        "--obs-dim", type=int, default=4, help="Observation dimension for the dummy input."
+        "--algo",
+        default=None,
+        help="Algorithm name registered in the factory; defaults to the run's manifest.",
+    )
+    parser.add_argument(
+        "--obs-dim",
+        type=int,
+        default=None,
+        help="Observation dimension for the dummy input; defaults to the run's manifest.",
     )
     parser.add_argument("--batch", type=int, default=1, help="Batch size for the dummy input.")
     parser.add_argument(

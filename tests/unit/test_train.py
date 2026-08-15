@@ -7,7 +7,9 @@ import pytest
 from hydra import compose, initialize
 from omegaconf import DictConfig
 
-from weir.cli.train import build_sim, run
+from weir.cli.eval import run_eval
+from weir.cli.train import run
+from weir.core.run import build_sim
 from weir.core.utils import CONFIG_DIR
 from weir.envs.backends.mujoco import MuJoCoSim
 from weir.envs.wrappers.randomized import RandomizedSim
@@ -52,11 +54,29 @@ def test_run_trains_a_short_run(
 
     assert result["steps"] == 128
     assert (tmp_path / "checkpoint.zip").exists()
+    assert (tmp_path / "checkpoint.meta.json").exists()
     events = [record.message for record in caplog.records]
     assert "train.start" in events
     assert "train.complete" in events
     assert caplog.records[0].sim == "mujoco"
     assert caplog.records[0].algo == "ppo"
+
+
+def test_run_manifest_drives_eval(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    run(make_config(["train.total_steps=32", "algo.n_steps=32"]))
+
+    checkpoint = tmp_path / "checkpoint.zip"
+    assert (tmp_path / "checkpoint.meta.json").exists()
+    metrics = run_eval(checkpoint, episodes=1, seed=0, max_steps=20)
+    assert set(metrics) == {
+        "mean_reward",
+        "mean_episode_length",
+        "total_forward_distance",
+        "mean_forward_distance_per_episode",
+        "episodes_completed",
+    }
+    assert metrics["mean_episode_length"] == 20.0
 
 
 def test_run_resumes_from_checkpoint(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

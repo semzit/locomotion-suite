@@ -9,6 +9,7 @@ import numpy as np
 from weir.cli.utils import add_checkpoint_arg, add_seed_arg, compose_config, guarded_main
 from weir.core.contracts import AlgorithmPlugin, SimBackend
 from weir.core.factory import create_algorithm, create_sim
+from weir.core.run import Run
 from weir.core.utils import config_to_dict, resolve_model_path
 
 
@@ -62,26 +63,32 @@ def rollout_metrics(
 def run_eval(
     checkpoint: Path,
     *,
-    agent: str,
-    task: str,
+    agent: str | None = None,
+    task: str | None = None,
     episodes: int,
     seed: int,
     max_steps: int,
     overrides: list[str] | None = None,
 ) -> dict[str, float]:
-    """Load a checkpoint and evaluate it with deterministic rollouts."""
-    cfg = compose_config(agent, task, overrides)
-    agent_config = config_to_dict(cfg.agent)
-    if "model" in agent_config:
-        agent_config["model"] = resolve_model_path(str(agent_config["model"]))
-    sim_config = config_to_dict(cfg.sim)
-    task_config = config_to_dict(cfg.task)
-    algorithm_config = config_to_dict(cfg.algo)
-
-    sim = create_sim(str(sim_config["plugin"]))
-    algorithm = create_algorithm(str(algorithm_config["plugin"]))
-    sim.load(agent_config, {**sim_config, "task": task_config})
-    algorithm.load(checkpoint)
+    """Evaluate a checkpoint, driven by its manifest unless flags override it."""
+    run = Run.open(checkpoint)
+    if run.config is not None and not (agent or task or overrides):
+        sim = run.sim()
+        run.validate(sim)
+        algorithm = run.algorithm()
+    else:
+        cfg = compose_config(agent or "humanoid", task or "standing", overrides)
+        agent_config = config_to_dict(cfg.agent)
+        if "model" in agent_config:
+            agent_config["model"] = resolve_model_path(str(agent_config["model"]))
+        sim_config = config_to_dict(cfg.sim)
+        task_config = config_to_dict(cfg.task)
+        algorithm_config = config_to_dict(cfg.algo)
+        sim = create_sim(str(sim_config["plugin"]))
+        sim.load(agent_config, {**sim_config, "task": task_config})
+        run.validate(sim)
+        algorithm = create_algorithm(str(algorithm_config["plugin"]))
+        algorithm.load(checkpoint)
     try:
         return rollout_metrics(sim, algorithm, episodes, seed=seed, max_steps=max_steps)
     finally:
@@ -96,13 +103,13 @@ def build_parser() -> argparse.ArgumentParser:
     add_checkpoint_arg(parser)
     parser.add_argument(
         "--agent",
-        default="humanoid",
-        help="Agent config group name (configs/agent/).",
+        default=None,
+        help="Agent config group name; defaults to the run's manifest (configs/agent/).",
     )
     parser.add_argument(
         "--task",
-        default="standing",
-        help="Task config group name (configs/task/).",
+        default=None,
+        help="Task config group name; defaults to the run's manifest (configs/task/).",
     )
     parser.add_argument("--episodes", type=int, default=5, help="Episodes to roll out.")
     add_seed_arg(parser, help="Seed for the rollouts.")
@@ -126,11 +133,15 @@ def _run_eval_from_args(args: argparse.Namespace) -> dict[str, Any]:
         max_steps=args.max_steps,
         overrides=args.override,
     )
+    run = Run.open(args.checkpoint)
+    config = run.config or {}
+    agent_name = args.agent or str(config.get("agent", {}).get("name", "unknown"))
+    task_name = args.task or str(config.get("task", {}).get("name", "unknown"))
     return {
         "metrics": metrics,
         "checkpoint": str(args.checkpoint),
-        "agent": args.agent,
-        "task": args.task,
+        "agent": agent_name,
+        "task": task_name,
     }
 
 
