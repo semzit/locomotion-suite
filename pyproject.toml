@@ -25,6 +25,7 @@ dependencies = [
 [project.scripts]
 weir-eval = "weir.cli.eval:main"
 weir-export = "weir.cli.export:main"
+weir-render = "weir.cli.render:main"
 weir-train = "weir.cli.train:main"
 
 [dependency-groups]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from typing import Any
 
 import mujoco
@@ -30,6 +31,9 @@ class MuJoCoSim(SimBackend):
             task_type = TASKS[task_name]
         except KeyError as error:
             raise ValueError(f"Unknown task: {task_name!r}") from error
+        if "nq" in inspect.signature(task_type).parameters and "nq" not in task_params:
+            model = self._require_model()
+            task_params["nq"] = model.nq
         self._task = task_type(**task_params)
         self._time_limit = float(sim_config.get("time_limit", float("inf")))
 

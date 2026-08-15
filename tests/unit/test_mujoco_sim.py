@@ -135,7 +135,7 @@ def test_berkeley_humanoid_rolls_out() -> None:
 def test_walk_forward_task_terminates_on_fall() -> None:
     sim = make_sim(
         SIMPLE_HUMANOID,
-        task={"name": "walk_forward", "params": {"nq": 13, "min_height": 0.9}},
+        task={"name": "walk_forward", "params": {"min_height": 0.9}},
     )
     sim.reset(seed=0)
     result = None
@@ -148,6 +148,17 @@ def test_walk_forward_task_terminates_on_fall() -> None:
     assert isinstance(result, SimStep)
     assert result.terminated is True
     assert result.observation[2] < 0.9
+
+
+def test_walk_forward_injects_nq_from_model() -> None:
+    sim = make_sim(SIMPLE_HUMANOID, task={"name": "walk_forward", "params": {}})
+    sim.reset(seed=0)
+    obs = np.zeros(sim.observation_shape().dims, dtype=np.float32)
+    obs[2] = 1.4
+    obs[3] = 1.0
+    obs[13] = 1.0  # qvel[0]: root x velocity for nq=13
+    result = sim.step(np.zeros(6, dtype=np.float32))
+    assert result.reward > 1.0  # forward velocity term present => nq=13 injected
 
 
 @settings(max_examples=40, deadline=None)

@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="assets/weir-hero.jpg" alt="Weir" width="520" />
-</p>
-
 # Weir
 
 Train a simulated legged agent to walk using reinforcement learning. A small, self-contained
@@ -18,16 +14,15 @@ Train, evaluate, record, and export a walking policy:
 
 ```bash
 # 1. Train PPO on the simple humanoid, walking task
-uv run weir-train agent=simple_humanoid task=walk_forward task.params.nq=13
+uv run weir-train agent=simple_humanoid task=walk_forward
 
 # 2. Evaluate the trained policy (mean reward, episode length, forward distance)
 uv run weir-eval --checkpoint outputs/2026-08-14/<run>/checkpoint.zip \
-  --agent simple_humanoid --task walk_forward --override "task.params.nq=13"
+  --agent simple_humanoid --task walk_forward
 
 # 3. Record an mp4 of the policy walking
-python -m weir.cli.render --model weir/models/simple_humanoid.xml \
-  --task walk_forward --task-param nq=13 \
-  --checkpoint outputs/2026-08-14/<run>/checkpoint.zip --output walk.mp4
+uv run weir-render --model weir/models/simple_humanoid.xml \
+  --task walk_forward --checkpoint outputs/2026-08-14/<run>/checkpoint.zip --output walk.mp4
 
 # 4. Export the policy to a standalone .onnx file
 uv run weir-export --checkpoint outputs/2026-08-14/<run>/checkpoint.zip --obs-dim 25
