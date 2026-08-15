@@ -6,7 +6,7 @@ from weir.core.tasks import (
     StandingTask,
     SurviveTask,
     WalkForwardTask,
-    _rotate_vector,
+    rotate_vector,
 )
 
 
@@ -132,7 +132,7 @@ def test_walk_forward_registry_builds_with_params() -> None:
 
 def test_rotate_vector_rotates_wxyz_quaternion() -> None:
     quarter_turn = np.asarray([np.cos(np.pi / 4), 0.0, 0.0, np.sin(np.pi / 4)])
-    forward = _rotate_vector(quarter_turn, (1.0, 0.0, 0.0))
-    up = _rotate_vector(quarter_turn, (0.0, 0.0, 1.0))
+    forward = rotate_vector(quarter_turn, (1.0, 0.0, 0.0))
+    up = rotate_vector(quarter_turn, (0.0, 0.0, 1.0))
     assert np.allclose(forward, [0.0, 1.0, 0.0])
     assert np.allclose(up, [0.0, 0.0, 1.0])

@@ -14,7 +14,7 @@ _FIELD_MAP = {
 }
 
 
-class RandomizedSim:
+class RandomizedSim(SimBackend):
     """SimBackend decorator that hardens any simulator for sim-to-real transfer.
 
     Wraps an inner SimBackend and layers on, per episode: domain randomization
@@ -41,16 +41,16 @@ class RandomizedSim:
 
     def step(self, actions: Action) -> SimStep:
         action = np.asarray(actions, dtype=np.float32)
-        action = self._add_action_noise(action)
+        action = self._add_noise(action, self._cfg("action_noise_std", 0.0))
         action = self._apply_latency(action)
         inner = self._inner
-        perturbation_force = float(self._config.get("perturbation_force", 0.0))
+        perturbation_force = self._cfg("perturbation_force", 0.0)
         if isinstance(inner, DomainRandomizable):
             self._maybe_perturb(inner, perturbation_force)
         result = inner.step(action)
         if isinstance(inner, DomainRandomizable) and perturbation_force > 0:
             inner.apply_perturbation(np.zeros(3))
-        observation = self._add_observation_noise(result.observation)
+        observation = self._add_noise(result.observation, self._cfg("noise_std", 0.0))
         return SimStep(
             observation=observation,
             reward=result.reward,
@@ -67,6 +67,9 @@ class RandomizedSim:
     def close(self) -> None:
         self._inner.close()
 
+    def _cfg(self, key: str, default: float) -> float:
+        return float(self._config.get(key, default))
+
     def _randomize_domain(self) -> None:
         inner = self._inner
         assert isinstance(inner, DomainRandomizable)
@@ -79,20 +82,12 @@ class RandomizedSim:
             params[field] = np.asarray(params[field]) * factor
         inner.apply_domain_params(params)
 
-    def _add_observation_noise(self, observation: Observation) -> Observation:
-        noise_std = float(self._config.get("noise_std", 0.0))
-        if noise_std <= 0:
-            return observation
-        noisy = np.asarray(observation, dtype=np.float32) + self._rng.normal(
-            0.0, noise_std, size=observation.shape
-        )
-        return noisy.astype(np.float32)
-
-    def _add_action_noise(self, action: np.ndarray) -> np.ndarray:
-        noise_std = float(self._config.get("action_noise_std", 0.0))
-        if noise_std <= 0:
-            return action
-        return (action + self._rng.normal(0.0, noise_std, size=action.shape)).astype(np.float32)
+    def _add_noise(self, values: np.ndarray, std: float) -> np.ndarray:
+        if std <= 0:
+            return values
+        return (
+            np.asarray(values, dtype=np.float32) + self._rng.normal(0.0, std, size=values.shape)
+        ).astype(np.float32)
 
     def _apply_latency(self, action: np.ndarray) -> np.ndarray:
         delay = int(self._config.get("latency_steps", 0))
@@ -104,7 +99,7 @@ class RandomizedSim:
         return self._latency.popleft()
 
     def _maybe_perturb(self, inner: DomainRandomizable, force: float) -> None:
-        prob = float(self._config.get("perturbation_prob", 0.0))
+        prob = self._cfg("perturbation_prob", 0.0)
         if force <= 0 or self._rng.random() >= prob:
             return
         inner.apply_perturbation(self._rng.normal(0.0, force, size=3))

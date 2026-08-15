@@ -5,11 +5,11 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from weir.core.contracts import Action, Observation, Shape, SimStep
+from weir.core.contracts import Action, Observation, Shape, SimBackend, SimStep
 from weir.core.tasks import TASKS, Task
 
 
-class MuJoCoSim:
+class MuJoCoSim(SimBackend):
     """MuJoCo-backed SimBackend for single-environment rollouts."""
 
     def __init__(self) -> None:
