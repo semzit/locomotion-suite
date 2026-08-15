@@ -1,6 +1,6 @@
 import pytest
 
-from weir.factory import create_algorithm, create_sim
+from weir.core.factory import create_algorithm, create_sim
 
 
 def test_create_sim_returns_mujoco() -> None:

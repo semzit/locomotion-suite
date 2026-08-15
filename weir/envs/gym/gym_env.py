@@ -5,7 +5,7 @@ from typing import Any, SupportsFloat
 import numpy as np
 from gymnasium import Env, spaces
 
-from weir.contracts import Action, Observation, Shape, SimBackend
+from weir.core.contracts import Action, Observation, Shape, SimBackend
 
 
 class GymEnv(Env):

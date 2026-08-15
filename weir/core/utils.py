@@ -7,9 +7,9 @@ from typing import Any, cast
 import numpy as np
 from omegaconf import OmegaConf
 
-from weir.contracts import Shape
+from weir.core.contracts import Shape
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 PACKAGE_DIR = ROOT / "weir"
 CONFIG_DIR = ROOT / "configs"
 MODELS_DIR = PACKAGE_DIR / "models"

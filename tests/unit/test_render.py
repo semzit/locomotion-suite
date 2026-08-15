@@ -6,11 +6,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from weir.cli.render import main as render_main
+from weir.cli.render import render_episode
+from weir.core.factory import create_algorithm
+from weir.core.utils import MODELS_DIR
 from weir.envs.sim.mujoco import MuJoCoSim
-from weir.factory import create_algorithm
-from weir.render import main as render_main
-from weir.render import render_episode
-from weir.utils import MODELS_DIR
 
 CART_POLE = MODELS_DIR / "cartpole.xml"
 

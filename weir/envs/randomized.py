@@ -5,7 +5,7 @@ from typing import Any
 
 import numpy as np
 
-from weir.contracts import Action, DomainRandomizable, Observation, Shape, SimBackend, SimStep
+from weir.core.contracts import Action, DomainRandomizable, Observation, Shape, SimBackend, SimStep
 
 _FIELD_MAP = {
     "mass_scale": "body_mass",

@@ -9,8 +9,8 @@ import pytest
 import torch
 from torch import nn
 
-from weir.contracts import Shape
-from weir.export import export_policy_to_onnx, main, verify_export
+from weir.cli.export import export_policy_to_onnx, main, verify_export
+from weir.core.contracts import Shape
 
 OBS_DIM = 4
 ACTION_DIM = 2
@@ -93,7 +93,7 @@ def test_cli_exports_and_verifies(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     algorithm = FakeAlgorithm()
     algorithm.save(checkpoint)
     output = tmp_path / "cli_policy.onnx"
-    monkeypatch.setattr("weir.export.create_algorithm", lambda _name: FakeAlgorithm())
+    monkeypatch.setattr("weir.cli.export.create_algorithm", lambda _name: FakeAlgorithm())
     monkeypatch.setattr(
         sys,
         "argv",
@@ -118,8 +118,8 @@ def test_cli_returns_nonzero_on_verification_failure(
 ) -> None:
     checkpoint = tmp_path / "policy.pt"
     FakeAlgorithm().save(checkpoint)
-    monkeypatch.setattr("weir.export.create_algorithm", lambda _name: FakeAlgorithm())
-    monkeypatch.setattr("weir.export.verify_export", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr("weir.cli.export.create_algorithm", lambda _name: FakeAlgorithm())
+    monkeypatch.setattr("weir.cli.export.verify_export", lambda *_args, **_kwargs: False)
     monkeypatch.setattr(
         sys,
         "argv",

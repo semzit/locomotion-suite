@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 from omegaconf import DictConfig
 
-from weir.contracts import Shape
-from weir.utils import (
+from weir.core.contracts import Shape
+from weir.core.utils import (
     CONFIG_DIR,
     MODELS_DIR,
     ROOT,
@@ -18,7 +18,7 @@ from weir.utils import (
 
 
 def test_root_aligns_with_repo() -> None:
-    assert (ROOT / "weir" / "contracts.py").exists()
+    assert (ROOT / "weir" / "core" / "contracts.py").exists()
 
 
 def test_subfolder_paths_exist() -> None:
@@ -57,8 +57,8 @@ def test_config_to_dict_resolves_section() -> None:
 
 
 def test_log_event_attaches_fields(caplog) -> None:
-    logger = logging.getLogger("weir.utils.test")
-    with caplog.at_level("INFO", logger="weir.utils.test"):
+    logger = logging.getLogger("weir.core.utils.test")
+    with caplog.at_level("INFO", logger="weir.core.utils.test"):
         log_event(logger, "test.event", sim="mujoco", steps=5)
 
     assert len(caplog.records) == 1

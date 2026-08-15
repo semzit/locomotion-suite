@@ -7,8 +7,8 @@ from typing import Any
 import numpy as np
 import pytest
 
-from weir.contracts import Shape, SimStep
-from weir.eval import main, rollout_metrics
+from weir.cli.eval import main, rollout_metrics
+from weir.core.contracts import Shape, SimStep
 
 
 class FakeSim:
@@ -145,8 +145,8 @@ def test_cli_evaluates_and_prints_summary(
 ) -> None:
     checkpoint = tmp_path / "checkpoint.zip"
     checkpoint.write_bytes(b"fake-checkpoint")
-    monkeypatch.setattr("weir.eval.create_sim", lambda _name: FakeSim())
-    monkeypatch.setattr("weir.eval.create_algorithm", lambda _name: FakeAlgorithm())
+    monkeypatch.setattr("weir.cli.eval.create_sim", lambda _name: FakeSim())
+    monkeypatch.setattr("weir.cli.eval.create_algorithm", lambda _name: FakeAlgorithm())
     monkeypatch.setattr(
         sys,
         "argv",
@@ -168,7 +168,7 @@ def test_cli_evaluates_and_prints_summary(
 def test_cli_returns_nonzero_on_missing_checkpoint(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("weir.eval.create_sim", lambda _name: FakeSim())
+    monkeypatch.setattr("weir.cli.eval.create_sim", lambda _name: FakeSim())
     monkeypatch.setattr(
         sys,
         "argv",

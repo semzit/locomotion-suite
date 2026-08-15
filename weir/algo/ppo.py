@@ -10,7 +10,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.policies import ActorCriticPolicy
 from torch import nn
 
-from weir.contracts import Shape
+from weir.core.contracts import Shape
 from weir.envs.gym.gym_env import shape_to_box
 
 

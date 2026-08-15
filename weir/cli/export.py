@@ -11,8 +11,8 @@ import onnxruntime as ort
 import torch
 from torch import nn
 
-from weir.factory import create_algorithm
-from weir.utils import log_event
+from weir.core.factory import create_algorithm
+from weir.core.utils import log_event
 
 logger = logging.getLogger("weir")
 
@@ -102,7 +102,7 @@ def main() -> int:
     parser.add_argument(
         "--output", type=Path, default=Path("policy.onnx"), help="Output ONNX file path."
     )
-    parser.add_argument("--algo", default="ppo", help="Algorithm name registered in weir.factory.")
+    parser.add_argument("--algo", default="ppo", help="Algorithm name registered in the factory.")
     parser.add_argument(
         "--obs-dim", type=int, default=4, help="Observation dimension for the dummy input."
     )

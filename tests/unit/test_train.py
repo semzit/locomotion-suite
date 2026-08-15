@@ -8,10 +8,10 @@ from hydra import compose, initialize
 from omegaconf import DictConfig
 
 from weir.algo.ppo import PPOAlgorithm
+from weir.cli.train import build_sim, check_conformance, run
+from weir.core.utils import CONFIG_DIR
 from weir.envs.randomized import RandomizedSim
 from weir.envs.sim.mujoco import MuJoCoSim
-from weir.train import build_sim, check_conformance, run
-from weir.utils import CONFIG_DIR
 
 ROOT = Path(__file__).parents[2]
 CONFIG_RELATIVE = str(Path(os.path.relpath(CONFIG_DIR, Path(__file__).parent)))

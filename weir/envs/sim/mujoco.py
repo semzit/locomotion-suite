@@ -5,8 +5,8 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from weir.contracts import Action, Observation, Shape, SimStep
-from weir.tasks import TASKS, Task
+from weir.core.contracts import Action, Observation, Shape, SimStep
+from weir.core.tasks import TASKS, Task
 
 
 class MuJoCoSim:

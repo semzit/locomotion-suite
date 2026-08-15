@@ -7,10 +7,10 @@ from typing import Any
 
 import imageio.v2 as imageio
 
-from weir.contracts import AlgorithmPlugin
+from weir.core.contracts import AlgorithmPlugin
+from weir.core.factory import create_algorithm
+from weir.core.utils import resolve_model_path
 from weir.envs.sim.mujoco import MuJoCoSim
-from weir.factory import create_algorithm
-from weir.utils import resolve_model_path
 
 
 def render_episode(

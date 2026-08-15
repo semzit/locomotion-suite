@@ -10,9 +10,9 @@ import numpy as np
 from hydra import compose, initialize
 from omegaconf import DictConfig
 
-from weir.contracts import AlgorithmPlugin, SimBackend
-from weir.factory import create_algorithm, create_sim
-from weir.utils import CONFIG_DIR, config_to_dict, log_event, resolve_model_path
+from weir.core.contracts import AlgorithmPlugin, SimBackend
+from weir.core.factory import create_algorithm, create_sim
+from weir.core.utils import CONFIG_DIR, config_to_dict, log_event, resolve_model_path
 
 logger = logging.getLogger("weir")
 

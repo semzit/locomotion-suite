@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from weir.tasks import (
+from weir.core.tasks import (
     TASKS,
     StandingTask,
     SurviveTask,

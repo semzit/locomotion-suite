@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from weir.algo.ppo import PPOAlgorithm
-from weir.contracts import AlgorithmPlugin, Shape, SimBackend
+from weir.core.contracts import AlgorithmPlugin, Shape, SimBackend
 from weir.envs.sim.mujoco import MuJoCoSim
 
 

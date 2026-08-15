@@ -6,7 +6,7 @@ from typing import Protocol
 
 import numpy as np
 
-from weir.contracts import Action, Observation
+from weir.core.contracts import Action, Observation
 
 
 class Task(Protocol):
