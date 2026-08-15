@@ -61,7 +61,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--width", type=int, default=640)
     parser.add_argument("--height", type=int, default=480)
     parser.add_argument("--fps", type=int, default=30)
-    parser.add_argument("--algo", default="ppo", help="Algorithm name registered in the factory.")
+    parser.add_argument(
+        "--algo",
+        default=None,
+        help="Algorithm name registered in the factory; defaults to the run's manifest.",
+    )
     parser.add_argument(
         "--checkpoint",
         type=Path,
@@ -88,10 +92,11 @@ def _parse_task_params(entries: list[str]) -> dict[str, object]:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     run = Run.open(args.checkpoint) if args.checkpoint else None
+    manifest = run.config if run is not None else None
     overridden = args.model or args.task or args.task_param
     sim = MuJoCoSim()
     try:
-        if run is not None and run.config is not None and not overridden:
+        if run is not None and manifest is not None and not overridden:
             sim = run.sim()
             run.validate(sim)
             if not isinstance(sim, MuJoCoSim):
@@ -100,20 +105,22 @@ def main(argv: list[str] | None = None) -> int:
                 )
             algo = run.algorithm()
         else:
-            model = args.model or "weir/models/cartpole.xml"
+            if manifest is not None:
+                model = args.model or str(manifest["agent"]["model"])
+                task_name = args.task or str(manifest["task"].get("name", "survive"))
+                task_params = dict(manifest["task"].get("params", {}))
+                task_params.update(_parse_task_params(args.task_param))
+            else:
+                model = args.model or "weir/models/cartpole.xml"
+                task_name = args.task or "survive"
+                task_params = _parse_task_params(args.task_param)
             sim.load(
                 {"name": "render", "model": resolve_model_path(model)},
-                {
-                    "task": {
-                        "name": args.task or "survive",
-                        "params": _parse_task_params(args.task_param),
-                    },
-                    "time_limit": args.time_limit,
-                },
+                {"task": {"name": task_name, "params": task_params}, "time_limit": args.time_limit},
             )
             if run is not None:
                 run.validate(sim)
-            algo = create_algorithm(args.algo)
+            algo = create_algorithm(args.algo or (run.plugin("algo") if run else None) or "ppo")
             if args.checkpoint:
                 algo.load(args.checkpoint)
             else:
@@ -128,7 +135,7 @@ def main(argv: list[str] | None = None) -> int:
             fps=args.fps,
             seed=args.seed,
         )
-    except (RuntimeError, ValueError) as error:
+    except (RuntimeError, TypeError, ValueError) as error:
         print(f"weir-render: {error}", file=sys.stderr)
         return 1
     finally:

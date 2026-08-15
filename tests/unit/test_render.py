@@ -175,3 +175,12 @@ def test_cli_rejects_malformed_task_param(tmp_path: Path, monkeypatch: pytest.Mo
         ["weir-render", "--model", str(CART_POLE), "--task-param", "nq"],
     )
     assert render_main() == 1
+
+
+def test_cli_rejects_unknown_task_param(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["weir-render", "--model", str(CART_POLE), "--task-param", "x=1"],
+    )
+    assert render_main() == 1

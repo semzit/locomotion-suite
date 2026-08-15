@@ -70,14 +70,22 @@ def run_eval(
     max_steps: int,
     overrides: list[str] | None = None,
 ) -> dict[str, float]:
-    """Evaluate a checkpoint, driven by its manifest unless flags override it."""
+    """Evaluate a checkpoint, driven by its manifest unless flags override it.
+
+    Flags and overrides layer on top of the manifest: the run's agent/task are
+    used as the base so e.g. ``--override task.params.x=1`` tweaks the run's
+    own task instead of switching to the defaults.
+    """
     run = Run.open(checkpoint)
-    if run.config is not None and not (agent or task or overrides):
+    manifest = run.config
+    if manifest is not None and not (agent or task or overrides):
         sim = run.sim()
         run.validate(sim)
         algorithm = run.algorithm()
     else:
-        cfg = compose_config(agent or "humanoid", task or "standing", overrides)
+        base_agent = agent or _manifest_value(manifest, "agent", "name") or "humanoid"
+        base_task = task or _manifest_value(manifest, "task", "name") or "standing"
+        cfg = compose_config(base_agent, base_task, overrides)
         agent_config = config_to_dict(cfg.agent)
         if "model" in agent_config:
             agent_config["model"] = resolve_model_path(str(agent_config["model"]))
@@ -93,6 +101,13 @@ def run_eval(
         return rollout_metrics(sim, algorithm, episodes, seed=seed, max_steps=max_steps)
     finally:
         sim.close()
+
+
+def _manifest_value(manifest: dict[str, Any] | None, section: str, key: str) -> str | None:
+    if manifest is None:
+        return None
+    value = manifest.get(section, {}).get(key)
+    return str(value) if value else None
 
 
 def build_parser() -> argparse.ArgumentParser:

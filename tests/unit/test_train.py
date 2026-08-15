@@ -79,6 +79,19 @@ def test_run_manifest_drives_eval(monkeypatch: pytest.MonkeyPatch, tmp_path: Pat
     assert metrics["mean_episode_length"] == 20.0
 
 
+def test_run_eval_override_layers_on_manifest_agent(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    run(make_config(["train.total_steps=32", "algo.n_steps=32"]))
+    checkpoint = tmp_path / "checkpoint.zip"
+
+    metrics = run_eval(
+        checkpoint, episodes=1, seed=0, max_steps=10, overrides=["train.total_steps=5"]
+    )
+    assert metrics["mean_episode_length"] == 10.0
+
+
 def test_run_resumes_from_checkpoint(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.chdir(tmp_path)
     run(make_config(["train.total_steps=32", "algo.n_steps=32"]))

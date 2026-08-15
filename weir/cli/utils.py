@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -58,6 +59,7 @@ def guarded_main(
         result = runner(args)
     except Exception as error:
         log_event(logger, f"{event}.failed", error=str(error))
+        print(f"{event}: {error}", file=sys.stderr)
         return 1
     log_event(logger, f"{event}.complete", **result)
     if on_success:
