@@ -7,3 +7,4 @@ __pycache__/
 docs/
 checkpoint.zip
 outputs/
+*.mp4
