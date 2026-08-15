@@ -43,11 +43,11 @@
   </worldbody>
 
   <actuator>
-    <motor name="hip_l" joint="hip_l" gear="100"/>
-    <motor name="knee_l" joint="knee_l" gear="100"/>
-    <motor name="ankle_l" joint="ankle_l" gear="100"/>
-    <motor name="hip_r" joint="hip_r" gear="100"/>
-    <motor name="knee_r" joint="knee_r" gear="100"/>
-    <motor name="ankle_r" joint="ankle_r" gear="100"/>
+    <motor name="hip_l" joint="hip_l" gear="100" ctrlrange="-1 1"/>
+    <motor name="knee_l" joint="knee_l" gear="100" ctrlrange="-1 1"/>
+    <motor name="ankle_l" joint="ankle_l" gear="100" ctrlrange="-1 1"/>
+    <motor name="hip_r" joint="hip_r" gear="100" ctrlrange="-1 1"/>
+    <motor name="knee_r" joint="knee_r" gear="100" ctrlrange="-1 1"/>
+    <motor name="ankle_r" joint="ankle_r" gear="100" ctrlrange="-1 1"/>
   </actuator>
 </mujoco>

@@ -65,11 +65,16 @@ class MuJoCoSim(SimBackend):
     def action_shape(self) -> Shape:
         model = self._require_model()
         ctrlrange = model.actuator_ctrlrange
+        low = ctrlrange[:, 0].astype(np.float32)
+        high = ctrlrange[:, 1].astype(np.float32)
+        if np.all(low == high):
+            low = np.full(model.nu, -1.0, dtype=np.float32)
+            high = np.full(model.nu, 1.0, dtype=np.float32)
         return Shape(
             dims=(model.nu,),
             dtype="float32",
-            low=ctrlrange[:, 0].astype(np.float32),
-            high=ctrlrange[:, 1].astype(np.float32),
+            low=low,
+            high=high,
         )
 
     def render_frame(self, width: int = 640, height: int = 480) -> np.ndarray:
@@ -123,8 +128,9 @@ class MuJoCoSim(SimBackend):
 
     def apply_perturbation(self, force: Action) -> None:
         data = self._require_data()
-        data.xfrc_applied[0, :3] = np.asarray(force, dtype=float)[:3]
-        data.xfrc_applied[0, 3:] = 0.0
+        root_body = 1  # xfrc_applied row 0 is the world body; 1 is the root/movable body
+        data.xfrc_applied[root_body, :3] = np.asarray(force, dtype=float)[:3]
+        data.xfrc_applied[root_body, 3:] = 0.0
 
     def _observe(self, data: mujoco.MjData) -> Observation:
         return np.concatenate([data.qpos, data.qvel]).astype(np.float32)

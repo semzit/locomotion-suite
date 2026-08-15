@@ -45,6 +45,14 @@ def test_action_shape_reports_bounds() -> None:
     assert shape.low.shape == (1,)
 
 
+def test_action_shape_falls_back_when_ctrlrange_degenerate() -> None:
+    sim = make_sim(MODELS / "no_ctrlrange.xml")
+    shape = sim.action_shape()
+    assert shape.low is not None and shape.high is not None
+    assert np.all(shape.low == -1.0)
+    assert np.all(shape.high == 1.0)
+
+
 def test_step_returns_simstep() -> None:
     sim = make_sim(CART_POLE)
     sim.reset()
@@ -131,8 +139,9 @@ def test_walk_forward_task_terminates_on_fall() -> None:
     )
     sim.reset(seed=0)
     result = None
-    for _ in range(100):
-        result = sim.step(np.full(6, 100.0, dtype=np.float32))
+    for _ in range(300):
+        sim.apply_perturbation(np.array([300.0, 0.0, 0.0]))
+        result = sim.step(np.zeros(6, dtype=np.float32))
         if result.terminated:
             break
     assert result is not None
