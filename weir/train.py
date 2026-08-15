@@ -8,7 +8,7 @@ import hydra
 from omegaconf import DictConfig
 
 from weir.contracts import AlgorithmPlugin, SimBackend
-from weir.envs.gym_env import GymEnv
+from weir.envs.gym.gym_env import GymEnv
 from weir.factory import create_algorithm, create_sim
 from weir.utils import CONFIG_DIR, config_to_dict, log_event, resolve_model_path
 

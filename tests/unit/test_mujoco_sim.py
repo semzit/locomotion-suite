@@ -8,8 +8,8 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from weir.contracts import SimStep
-from weir.envs.mujoco import MuJoCoSim
-from weir.envs.utils import MODELS_DIR
+from weir.envs.sim.mujoco import MuJoCoSim
+from weir.envs.sim.utils import MODELS_DIR
 
 MODELS = MODELS_DIR
 CART_POLE = MODELS / "cartpole.xml"

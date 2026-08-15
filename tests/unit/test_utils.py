@@ -6,7 +6,7 @@ from omegaconf import DictConfig
 
 from weir.algo.utils import sample_action
 from weir.contracts import Shape
-from weir.envs.utils import MODELS_DIR, resolve_model_asset
+from weir.envs.sim.utils import MODELS_DIR, resolve_model_asset
 from weir.utils import CONFIG_DIR, ROOT, config_to_dict, log_event, resolve_model_path
 
 

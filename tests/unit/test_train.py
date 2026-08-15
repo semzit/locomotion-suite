@@ -8,7 +8,7 @@ from hydra import compose, initialize
 from omegaconf import DictConfig
 
 from weir.algo.ppo import PPOAlgorithm
-from weir.envs.mujoco import MuJoCoSim
+from weir.envs.sim.mujoco import MuJoCoSim
 from weir.train import check_conformance, run
 from weir.utils import CONFIG_DIR
 

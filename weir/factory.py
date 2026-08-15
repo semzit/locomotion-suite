@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from weir.algo.ppo import PPOAlgorithm
 from weir.contracts import AlgorithmPlugin, SimBackend
-from weir.envs.mujoco import MuJoCoSim
+from weir.envs.sim.mujoco import MuJoCoSim
 
 SIMS: dict[str, type[SimBackend]] = {
     "mujoco": MuJoCoSim,
