@@ -118,13 +118,17 @@ def _run_eval_from_args(args: argparse.Namespace) -> dict[str, Any]:
         seed=args.seed,
         max_steps=args.max_steps,
     )
-    return {"checkpoint": str(args.checkpoint), "agent": args.agent, "task": args.task, **metrics}
+    return {
+        "metrics": metrics,
+        "checkpoint": str(args.checkpoint),
+        "agent": args.agent,
+        "task": args.task,
+    }
 
 
-def _print_metrics(metrics: dict[str, float]) -> None:
-    for key, value in metrics.items():
-        if isinstance(value, float):
-            print(f"{key}: {value:.3f}")
+def _print_metrics(result: dict[str, Any]) -> None:
+    for key, value in result["metrics"].items():
+        print(f"{key}: {value:.3f}")
 
 
 def main(argv: list[str] | None = None) -> int:

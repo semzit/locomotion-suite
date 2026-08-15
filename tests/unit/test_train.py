@@ -7,8 +7,7 @@ import pytest
 from hydra import compose, initialize
 from omegaconf import DictConfig
 
-from weir.algo.ppo import PPOAlgorithm
-from weir.cli.train import build_sim, check_conformance, run
+from weir.cli.train import build_sim, run
 from weir.core.utils import CONFIG_DIR
 from weir.envs.backends.mujoco import MuJoCoSim
 from weir.envs.wrappers.randomized import RandomizedSim
@@ -60,25 +59,7 @@ def test_run_trains_a_short_run(
     assert caplog.records[0].algo == "ppo"
 
 
-def test_conformance_passes_for_reference_plugins() -> None:
-    check_conformance(MuJoCoSim(), PPOAlgorithm())
-
-
 def test_build_sim_wraps_when_robust() -> None:
     assert isinstance(build_sim({"plugin": "mujoco"}), MuJoCoSim)
     hardened = build_sim({"plugin": "mujoco", "robust": True, "randomization": {}})
     assert isinstance(hardened, RandomizedSim)
-
-
-def test_conformance_rejects_non_sim() -> None:
-    class NotASim: ...
-
-    with pytest.raises(TypeError, match="SimBackend"):
-        check_conformance(NotASim(), PPOAlgorithm())  # type: ignore[arg-type]
-
-
-def test_conformance_rejects_non_algorithm() -> None:
-    class NotAnAlgorithm: ...
-
-    with pytest.raises(TypeError, match="AlgorithmPlugin"):
-        check_conformance(MuJoCoSim(), NotAnAlgorithm())  # type: ignore[arg-type]

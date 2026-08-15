@@ -8,7 +8,7 @@ import hydra
 from omegaconf import DictConfig
 
 from weir.cli.utils import setup_logging
-from weir.core.contracts import AlgorithmPlugin, SimBackend
+from weir.core.contracts import SimBackend
 from weir.core.factory import create_algorithm, create_sim
 from weir.core.utils import CONFIG_DIR, config_to_dict, log_event, resolve_model_path
 from weir.envs.gym_env import GymEnv
@@ -25,14 +25,6 @@ def build_sim(sim_config: dict[str, Any]) -> SimBackend:
     return sim
 
 
-def check_conformance(sim: SimBackend, algorithm: AlgorithmPlugin) -> None:
-    """Startup guard: fail fast if a configured plugin does not meet its protocol."""
-    if not isinstance(sim, SimBackend):
-        raise TypeError(f"{type(sim).__name__} does not implement SimBackend")
-    if not isinstance(algorithm, AlgorithmPlugin):
-        raise TypeError(f"{type(algorithm).__name__} does not implement AlgorithmPlugin")
-
-
 def run(cfg: DictConfig) -> dict[str, Any]:
     """Train the algorithm on the simulator for the configured number of steps."""
     agent = config_to_dict(cfg.agent)
@@ -44,7 +36,6 @@ def run(cfg: DictConfig) -> dict[str, Any]:
 
     sim = build_sim(sim_config)
     algorithm = create_algorithm(str(algorithm_config["plugin"]))
-    check_conformance(sim, algorithm)
 
     sim.load(agent, {**sim_config, "task": task})
     observation_shape = sim.observation_shape()
