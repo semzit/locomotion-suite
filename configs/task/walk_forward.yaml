@@ -1,0 +1,9 @@
+name: walk_forward
+params:
+  nq: 19
+  min_height: 0.9
+  forward_coef: 1.0
+  heading_coef: 0.3
+  upright_coef: 0.5
+  action_penalty_coef: 0.01
+  alive_reward: 0.5

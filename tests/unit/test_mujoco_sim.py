@@ -124,6 +124,23 @@ def test_berkeley_humanoid_rolls_out() -> None:
     assert result.observation.shape == obs.shape
 
 
+def test_walk_forward_task_terminates_on_fall() -> None:
+    sim = make_sim(
+        SIMPLE_HUMANOID,
+        task={"name": "walk_forward", "params": {"nq": 13, "min_height": 0.9}},
+    )
+    sim.reset(seed=0)
+    result = None
+    for _ in range(100):
+        result = sim.step(np.full(6, 100.0, dtype=np.float32))
+        if result.terminated:
+            break
+    assert result is not None
+    assert isinstance(result, SimStep)
+    assert result.terminated is True
+    assert result.observation[2] < 0.9
+
+
 @settings(max_examples=40, deadline=None)
 @given(seed=st.integers(0, 1000), steps=st.integers(1, 15))
 def test_rollout_conforms_to_shapes(seed: int, steps: int) -> None:
