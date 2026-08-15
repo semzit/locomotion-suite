@@ -22,10 +22,13 @@ def setup_logging() -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
-def compose_config(agent: str, task: str) -> DictConfig:
-    """Compose the train config with the requested agent and task groups."""
+def compose_config(agent: str, task: str, overrides: list[str] | None = None) -> DictConfig:
+    """Compose the train config with the requested agent, task, and extra overrides."""
     with initialize(version_base=None, config_path=CONFIG_RELATIVE):
-        return compose(config_name="train", overrides=[f"agent={agent}", f"task={task}"])
+        return compose(
+            config_name="train",
+            overrides=[f"agent={agent}", f"task={task}", *(overrides or [])],
+        )
 
 
 def add_checkpoint_arg(parser: argparse.ArgumentParser) -> None:

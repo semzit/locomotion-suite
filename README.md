@@ -9,7 +9,7 @@ project: a `SimBackend` and an `AlgorithmPlugin` Protocol, a training loop that 
 concrete implementation, Hydra config, and ONNX policy export.
 
 The simulator and the algorithm are both interchangeable, chosen at the command line rather than
-hardcoded — so you can compare PPO against SAC, or MuJoCo against Isaac Lab, without touching the
+hardcoded — so you can compare SB3 PPO against RLtools, or MuJoCo against Isaac Lab, without touching the
 training loop. Where the run executes is deliberately *not* interchangeable yet.
 
 ## Quick start

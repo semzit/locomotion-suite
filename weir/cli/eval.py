@@ -67,9 +67,10 @@ def run_eval(
     episodes: int,
     seed: int,
     max_steps: int,
+    overrides: list[str] | None = None,
 ) -> dict[str, float]:
     """Load a checkpoint and evaluate it with deterministic rollouts."""
-    cfg = compose_config(agent, task)
+    cfg = compose_config(agent, task, overrides)
     agent_config = config_to_dict(cfg.agent)
     if "model" in agent_config:
         agent_config["model"] = resolve_model_path(str(agent_config["model"]))
@@ -106,6 +107,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--episodes", type=int, default=5, help="Episodes to roll out.")
     add_seed_arg(parser, help="Seed for the rollouts.")
     parser.add_argument("--max-steps", type=int, default=1000, help="Maximum steps per episode.")
+    parser.add_argument(
+        "--override",
+        action="append",
+        default=[],
+        help="Hydra override, repeatable (e.g. --override task.params.nq=13).",
+    )
     return parser
 
 
@@ -117,6 +124,7 @@ def _run_eval_from_args(args: argparse.Namespace) -> dict[str, Any]:
         episodes=args.episodes,
         seed=args.seed,
         max_steps=args.max_steps,
+        overrides=args.override,
     )
     return {
         "metrics": metrics,
