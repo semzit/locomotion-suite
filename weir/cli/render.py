@@ -45,14 +45,41 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--model", default="weir/models/cartpole.xml")
     parser.add_argument("--task", default="survive")
+    parser.add_argument(
+        "--task-param",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help="Task parameter override, repeatable (e.g. --task-param nq=13).",
+    )
     parser.add_argument("--time-limit", type=float, default=5.0)
     parser.add_argument("--output", default="video.mp4")
     parser.add_argument("--frames", type=int, default=120)
     parser.add_argument("--width", type=int, default=640)
     parser.add_argument("--height", type=int, default=480)
     parser.add_argument("--fps", type=int, default=30)
+    parser.add_argument("--algo", default="ppo", help="Algorithm name registered in the factory.")
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=None,
+        help="Trained algorithm checkpoint to play; defaults to a fresh random policy.",
+    )
     add_seed_arg(parser)
     return parser
+
+
+def _parse_task_params(entries: list[str]) -> dict[str, object]:
+    params: dict[str, object] = {}
+    for entry in entries:
+        key, sep, value = entry.partition("=")
+        if not key or not sep:
+            raise ValueError(f"Invalid task param (expected KEY=VALUE): {entry!r}")
+        try:
+            params[key] = float(value) if "." in value else int(value)
+        except ValueError:
+            params[key] = value
+    return params
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -61,10 +88,16 @@ def main(argv: list[str] | None = None) -> int:
     try:
         sim.load(
             {"name": "render", "model": resolve_model_path(args.model)},
-            {"task": {"name": args.task, "params": {}}, "time_limit": args.time_limit},
+            {
+                "task": {"name": args.task, "params": _parse_task_params(args.task_param)},
+                "time_limit": args.time_limit,
+            },
         )
-        algo = create_algorithm("ppo")
-        algo.configure(sim.observation_shape(), sim.action_shape(), {})
+        algo = create_algorithm(args.algo)
+        if args.checkpoint:
+            algo.load(args.checkpoint)
+        else:
+            algo.configure(sim.observation_shape(), sim.action_shape(), {})
         output_path = render_episode(
             sim,
             algo,
@@ -75,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
             fps=args.fps,
             seed=args.seed,
         )
-    except RuntimeError as error:
+    except (RuntimeError, ValueError) as error:
         print(f"weir-render: {error}", file=sys.stderr)
         return 1
     finally:

@@ -128,3 +128,50 @@ def test_cli_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert render_main() == 0
     assert output.exists()
     assert output.stat().st_size > 0
+
+
+def test_cli_renders_checkpoint_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    checkpoint = tmp_path / "checkpoint.zip"
+    checkpoint.write_bytes(b"fake-checkpoint")
+    output = tmp_path / "ckpt.mp4"
+
+    class FakeAlgorithm:
+        def load(self, path: Path) -> None:
+            assert Path(path).read_bytes() == b"fake-checkpoint"
+
+        def act(self, observation: object, deterministic: bool = False) -> np.ndarray:
+            return np.zeros(1, dtype=np.float32)
+
+    monkeypatch.setattr("weir.cli.render.create_algorithm", lambda _name: FakeAlgorithm())
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "weir-render",
+            "--model",
+            str(CART_POLE),
+            "--checkpoint",
+            str(checkpoint),
+            "--output",
+            str(output),
+            "--frames",
+            "5",
+            "--width",
+            "160",
+            "--height",
+            "120",
+            "--fps",
+            "15",
+        ],
+    )
+    assert render_main() == 0
+    assert output.exists()
+
+
+def test_cli_rejects_malformed_task_param(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["weir-render", "--model", str(CART_POLE), "--task-param", "nq"],
+    )
+    assert render_main() == 1
