@@ -130,7 +130,7 @@ def test_cli_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert output.stat().st_size > 0
 
 
-def test_cli_renders_checkpoint_policy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cli_renders_legacy_checkpoint(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     checkpoint = tmp_path / "checkpoint.zip"
     checkpoint.write_bytes(b"fake-checkpoint")
     output = tmp_path / "ckpt.mp4"
@@ -166,6 +166,77 @@ def test_cli_renders_checkpoint_policy(tmp_path: Path, monkeypatch: pytest.Monke
     )
     assert render_main() == 0
     assert output.exists()
+
+
+def test_cli_plays_back_manifest_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeSim(MuJoCoSim):
+        def reset(self, seed: int | None = None) -> np.ndarray:
+            return np.zeros(4, dtype=np.float32)
+
+        def step(self, action: object) -> object:
+            step = type(
+                "Step",
+                (),
+                {
+                    "observation": np.zeros(4, dtype=np.float32),
+                    "terminated": True,
+                    "truncated": False,
+                },
+            )
+            return step()
+
+        def render_frame(self, width: int = 0, height: int = 0) -> np.ndarray:
+            return np.zeros((height, width, 3), dtype=np.uint8)
+
+        def close(self) -> None: ...
+
+    class FakeAlgorithm:
+        def act(self, observation: object, deterministic: bool = False) -> np.ndarray:
+            return np.zeros(1, dtype=np.float32)
+
+    class FakeRun:
+        config = {"agent": {"name": "x"}}
+
+        def sim(self) -> FakeSim:
+            return FakeSim()
+
+        def validate(self, sim: object) -> None: ...
+
+        def algorithm(self) -> FakeAlgorithm:
+            return FakeAlgorithm()
+
+        @classmethod
+        def open(cls, _checkpoint: object) -> FakeRun:
+            return cls()
+
+    monkeypatch.setattr("weir.cli.render.Run", FakeRun)
+    output = tmp_path / "playback.mp4"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["weir-render", "--checkpoint", str(tmp_path / "checkpoint.zip"), "--output", str(output)],
+    )
+    assert render_main() == 0
+    assert output.exists()
+
+
+def test_cli_rejects_env_flags_with_manifest_checkpoint(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest = tmp_path / "checkpoint.meta.json"
+    manifest.write_text('{"agent": {"name": "x"}}', encoding="utf-8")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "weir-render",
+            "--checkpoint",
+            str(tmp_path / "checkpoint.zip"),
+            "--task-param",
+            "x=1",
+        ],
+    )
+    assert render_main() == 1
 
 
 def test_cli_rejects_malformed_task_param(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
