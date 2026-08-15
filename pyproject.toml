@@ -23,6 +23,7 @@ dependencies = [
 ]
 
 [project.scripts]
+weir-eval = "weir.eval:main"
 weir-export = "weir.export:main"
 weir-train = "weir.train:main"
 
