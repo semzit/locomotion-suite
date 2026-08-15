@@ -21,6 +21,7 @@ dependencies = [
 ]
 
 [project.scripts]
+weir-export = "weir.export:main"
 weir-train = "weir.train:main"
 
 [dependency-groups]
