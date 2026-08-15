@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 import argparse
-import logging
-import sys
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
-from weir.cli.utils import compose_config, setup_logging
+from weir.cli.utils import add_checkpoint_arg, add_seed_arg, compose_config, guarded_main
 from weir.core.contracts import AlgorithmPlugin, SimBackend
 from weir.core.factory import create_algorithm, create_sim
-from weir.core.utils import config_to_dict, log_event, resolve_model_path
-
-logger = logging.getLogger("weir")
+from weir.core.utils import config_to_dict, resolve_model_path
 
 
 def rollout_metrics(
@@ -95,9 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="weir-eval",
         description="Evaluate a trained checkpoint with deterministic rollouts.",
     )
-    parser.add_argument(
-        "--checkpoint", type=Path, required=True, help="Path to the algorithm checkpoint."
-    )
+    add_checkpoint_arg(parser)
     parser.add_argument(
         "--agent",
         default="humanoid",
@@ -109,39 +104,38 @@ def build_parser() -> argparse.ArgumentParser:
         help="Task config group name (configs/task/).",
     )
     parser.add_argument("--episodes", type=int, default=5, help="Episodes to roll out.")
-    parser.add_argument("--seed", type=int, default=0, help="Seed for the rollouts.")
+    add_seed_arg(parser, help="Seed for the rollouts.")
     parser.add_argument("--max-steps", type=int, default=1000, help="Maximum steps per episode.")
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
-    setup_logging()
-    try:
-        metrics = run_eval(
-            args.checkpoint,
-            agent=args.agent,
-            task=args.task,
-            episodes=args.episodes,
-            seed=args.seed,
-            max_steps=args.max_steps,
-        )
-    except Exception as error:
-        log_event(logger, "eval.failed", error=str(error))
-        print(f"weir-eval: {error}", file=sys.stderr)
-        return 1
-    log_event(
-        logger,
-        "eval.complete",
-        checkpoint=str(args.checkpoint),
+def _run_eval_from_args(args: argparse.Namespace) -> dict[str, Any]:
+    metrics = run_eval(
+        args.checkpoint,
         agent=args.agent,
         task=args.task,
-        **metrics,
+        episodes=args.episodes,
+        seed=args.seed,
+        max_steps=args.max_steps,
     )
+    return {"checkpoint": str(args.checkpoint), "agent": args.agent, "task": args.task, **metrics}
+
+
+def _print_metrics(metrics: dict[str, float]) -> None:
     for key, value in metrics.items():
-        print(f"{key}: {value:.3f}")
-    return 0
+        if isinstance(value, float):
+            print(f"{key}: {value:.3f}")
+
+
+def main(argv: list[str] | None = None) -> int:
+    return guarded_main(
+        build_parser(),
+        _run_eval_from_args,
+        "eval",
+        on_success=_print_metrics,
+        argv=argv,
+    )
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

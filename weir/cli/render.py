@@ -7,6 +7,7 @@ from typing import Any
 
 import imageio.v2 as imageio
 
+from weir.cli.utils import add_seed_arg
 from weir.core.contracts import AlgorithmPlugin
 from weir.core.factory import create_algorithm
 from weir.core.utils import resolve_model_path
@@ -50,7 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--width", type=int, default=640)
     parser.add_argument("--height", type=int, default=480)
     parser.add_argument("--fps", type=int, default=30)
-    parser.add_argument("--seed", type=int, default=0)
+    add_seed_arg(parser)
     return parser
 
 

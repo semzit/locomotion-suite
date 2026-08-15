@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import logging
-import sys
 from pathlib import Path
 from typing import cast
 
@@ -11,11 +9,8 @@ import onnxruntime as ort
 import torch
 from torch import nn
 
-from weir.cli.utils import setup_logging
+from weir.cli.utils import add_checkpoint_arg, guarded_main
 from weir.core.factory import create_algorithm
-from weir.core.utils import log_event
-
-logger = logging.getLogger("weir")
 
 DEFAULT_OPSET = 17
 
@@ -97,9 +92,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Export a trained algorithm policy to a standalone ONNX file."
     )
-    parser.add_argument(
-        "--checkpoint", type=Path, required=True, help="Path to the algorithm checkpoint."
-    )
+    add_checkpoint_arg(parser)
     parser.add_argument(
         "--output", type=Path, default=Path("policy.onnx"), help="Output ONNX file path."
     )
@@ -111,10 +104,8 @@ def main() -> int:
     parser.add_argument(
         "--samples", type=int, default=5, help="Random batches used for onnxruntime verification."
     )
-    args = parser.parse_args()
 
-    setup_logging()
-    try:
+    def run(args: argparse.Namespace) -> dict[str, object]:
         output_path = run_export(
             args.checkpoint,
             args.output,
@@ -123,12 +114,10 @@ def main() -> int:
             batch=args.batch,
             samples=args.samples,
         )
-    except Exception as error:
-        log_event(logger, "export.failed", error=str(error))
-        return 1
-    log_event(logger, "export.complete", checkpoint=str(args.checkpoint), output=str(output_path))
-    return 0
+        return {"checkpoint": str(args.checkpoint), "output": str(output_path)}
+
+    return guarded_main(parser, run, "export")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
