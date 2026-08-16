@@ -7,8 +7,8 @@ from weir.core.tasks import (
     StandingTask,
     SurviveTask,
     WalkForwardTask,
-    rotate_vector,
 )
+from weir.core.utils import rotate_vector
 
 
 def test_survive_never_terminates() -> None:
