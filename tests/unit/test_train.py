@@ -26,7 +26,7 @@ def make_config(overrides: list[str] | None = None) -> DictConfig:
 def test_config_composes_defaults() -> None:
     cfg = make_config()
     assert cfg.agent.name == "cartpole"
-    assert cfg.task.name == "survive"
+    assert cfg.task.name == "balance"
     assert cfg.sim.plugin == "mujoco"
     assert cfg.algo.plugin == "ppo"
     assert cfg.train.total_steps == 100000

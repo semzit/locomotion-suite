@@ -37,7 +37,7 @@ interface from the config groups under `configs/` (`agent/`, `task/`, `sim/`, `a
 ### Swapping pieces at the command line
 
 - `agent=cartpole` / `agent=simple_humanoid` / `agent=humanoid` — different robots, same pipeline
-- `task=survive` / `task=standing` / `task=walk_forward` — different objectives
+- `task=balance` / `task=standing` / `task=walk_forward` — different objectives (balance is the learnable toy task; `task=survive` gives a constant reward and learns nothing by design)
 - `sim=mujoco` — `SimBackend` implementations live in `weir/envs/backends/`
 - `algo=ppo` — `AlgorithmPlugin` implementations live in `weir/algo/`
 - `algo.checkpoint=<path>` — resume training from an existing checkpoint

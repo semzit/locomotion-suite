@@ -19,6 +19,7 @@ class MuJoCoSim(SimBackend):
         self._task: Task | None = None
         self._time_limit = float("inf")
         self._renderer: mujoco.Renderer | None = None
+        self._last_action: Action | None = None
 
     def load(self, agent_config: dict[str, Any], sim_config: dict[str, Any]) -> None:
         model_path = str(agent_config["model"])
@@ -40,6 +41,7 @@ class MuJoCoSim(SimBackend):
     def reset(self, seed: int | None = None) -> Observation:
         model = self._require_model()
         data = self._require_data()
+        self._last_action = None
         mujoco.mj_resetData(model, data)
         if seed is not None and model.nq > 7:
             rng = np.random.default_rng(seed)
@@ -55,12 +57,15 @@ class MuJoCoSim(SimBackend):
         data.ctrl[:] = action
         mujoco.mj_step(model, data)
         observation = self._observe(data)
-        return SimStep(
+        action_f32 = action.astype(np.float32)
+        step = SimStep(
             observation=observation,
-            reward=float(task.reward(observation, action.astype(np.float32))),
+            reward=float(task.reward(observation, action_f32, self._last_action)),
             terminated=bool(task.terminated(observation)),
             truncated=bool(data.time >= self._time_limit),
         )
+        self._last_action = action_f32
+        return step
 
     def observation_shape(self) -> Shape:
         model = self._require_model()
