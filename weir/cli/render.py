@@ -10,7 +10,7 @@ import imageio.v2 as imageio
 from weir.cli.utils import add_seed_arg
 from weir.core.contracts import AlgorithmPlugin
 from weir.core.factory import create_algorithm
-from weir.core.run import Run
+from weir.core.run import MANIFEST_NAME, Run
 from weir.core.utils import resolve_model_path
 from weir.envs.backends.mujoco import MuJoCoSim
 
@@ -72,7 +72,6 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="KEY=VALUE",
         help="Task parameter for demo renders, repeatable (no --checkpoint).",
     )
-    parser.add_argument("--time-limit", type=float, default=5.0)
     parser.add_argument("--output", default="video.mp4")
     parser.add_argument("--frames", type=int, default=120)
     parser.add_argument(
@@ -84,11 +83,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--width", type=int, default=640)
     parser.add_argument("--height", type=int, default=480)
     parser.add_argument("--fps", type=int, default=30)
-    parser.add_argument(
-        "--algo",
-        default=None,
-        help="Algorithm name for demo renders (no --checkpoint).",
-    )
     parser.add_argument(
         "--checkpoint",
         type=Path,
@@ -116,7 +110,6 @@ _DEMO_FLAGS = (
     ("--model", "model"),
     ("--task", "task"),
     ("--task-param", "task_param"),
-    ("--algo", "algo"),
 )
 
 
@@ -127,7 +120,12 @@ def main(argv: list[str] | None = None) -> int:
 
     run = Run.open(args.checkpoint)
     if run.config is None:
-        return _render_demo(args)  # legacy checkpoint without a manifest
+        print(
+            f"weir-render: no manifest ({MANIFEST_NAME}) next to {args.checkpoint}: "
+            "this checkpoint predates run manifests; re-train to create one",
+            file=sys.stderr,
+        )
+        return 1
 
     given = [flag for flag, attr in _DEMO_FLAGS if getattr(args, attr)]
     if given:
@@ -166,10 +164,10 @@ def _render_demo(args: argparse.Namespace) -> int:
                     "name": args.task or "survive",
                     "params": _parse_task_params(args.task_param),
                 },
-                "time_limit": args.time_limit,
+                "time_limit": 5.0,
             },
         )
-        algo = create_algorithm(args.algo or "ppo")
+        algo = create_algorithm("ppo")
         if args.checkpoint:
             algo.load(args.checkpoint)
         else:

@@ -13,7 +13,6 @@ from weir.envs.utils import MODELS_DIR
 
 MODELS = MODELS_DIR
 CART_POLE = MODELS / "cartpole.xml"
-SIMPLE_HUMANOID = MODELS / "simple_humanoid.xml"
 MENAGERIE = MODELS / "menagerie" / "berkeley_humanoid" / "berkeley_humanoid.xml"
 
 
@@ -72,25 +71,25 @@ def test_step_changes_observation() -> None:
 
 
 def test_reset_is_deterministic_without_seed() -> None:
-    a = make_sim(SIMPLE_HUMANOID).reset()
-    b = make_sim(SIMPLE_HUMANOID).reset()
+    a = make_sim(MENAGERIE).reset()
+    b = make_sim(MENAGERIE).reset()
     assert np.array_equal(a, b)
 
 
 def test_seed_randomizes_initial_state() -> None:
-    a = make_sim(SIMPLE_HUMANOID).reset(seed=1)
-    b = make_sim(SIMPLE_HUMANOID).reset(seed=2)
-    c = make_sim(SIMPLE_HUMANOID).reset(seed=1)
+    a = make_sim(MENAGERIE).reset(seed=1)
+    b = make_sim(MENAGERIE).reset(seed=2)
+    c = make_sim(MENAGERIE).reset(seed=1)
     assert np.array_equal(a, c)
     assert not np.array_equal(a, b)
 
 
 def test_same_seed_reproduces_trajectory() -> None:
     def trajectory(seed: int) -> list[np.ndarray]:
-        sim = make_sim(SIMPLE_HUMANOID)
+        sim = make_sim(MENAGERIE)
         obs = [sim.reset(seed=seed).copy()]
         for _ in range(5):
-            obs.append(sim.step(np.zeros(6, dtype=np.float32)).observation.copy())
+            obs.append(sim.step(np.zeros(12, dtype=np.float32)).observation.copy())
         return obs
 
     for x, y in zip(trajectory(7), trajectory(7), strict=True):
@@ -134,14 +133,14 @@ def test_berkeley_humanoid_rolls_out() -> None:
 
 def test_walk_forward_task_terminates_on_fall() -> None:
     sim = make_sim(
-        SIMPLE_HUMANOID,
+        MENAGERIE,
         task={"name": "walk_forward", "params": {"min_height": 0.9}},
     )
     sim.reset(seed=0)
     result = None
     for _ in range(300):
         sim.apply_perturbation(np.array([300.0, 0.0, 0.0]))
-        result = sim.step(np.zeros(6, dtype=np.float32))
+        result = sim.step(np.zeros(12, dtype=np.float32))
         if result.terminated:
             break
     assert result is not None
@@ -151,20 +150,28 @@ def test_walk_forward_task_terminates_on_fall() -> None:
 
 
 def test_walk_forward_injects_nq_from_model() -> None:
-    sim = make_sim(SIMPLE_HUMANOID, task={"name": "walk_forward", "params": {}})
-    sim.reset(seed=0)
-    obs = np.zeros(sim.observation_shape().dims, dtype=np.float32)
-    obs[2] = 1.4
-    obs[3] = 1.0
-    obs[13] = 1.0  # qvel[0]: root x velocity for nq=13
-    result = sim.step(np.zeros(6, dtype=np.float32))
-    assert result.reward > 1.0  # forward velocity term present => nq=13 injected
+    def reward(push: bool) -> float:
+        sim = make_sim(
+            MENAGERIE,
+            task={"name": "walk_forward", "params": {"min_height": 0.2}},
+        )
+        sim.reset(seed=0)
+        for _ in range(4):
+            if push:
+                sim.apply_perturbation(np.array([300.0, 0.0, 0.0]))
+            result = sim.step(np.zeros(12, dtype=np.float32))
+        return float(result.reward)
+
+    # The pushed rollout has qvel[0] > 0; a higher reward proves the forward
+    # term reads it via the injected nq=19 (a wrong nq would read a joint
+    # position, ~0, and the two rewards would be equal).
+    assert reward(push=True) > reward(push=False)
 
 
 @settings(max_examples=40, deadline=None)
 @given(seed=st.integers(0, 1000), steps=st.integers(1, 15))
 def test_rollout_conforms_to_shapes(seed: int, steps: int) -> None:
-    sim = make_sim(SIMPLE_HUMANOID, task={"name": "standing", "params": {"min_height": 0.2}})
+    sim = make_sim(MENAGERIE, task={"name": "standing", "params": {"min_height": 0.2}})
     obs_shape = sim.observation_shape()
     act_shape = sim.action_shape()
     rng = np.random.default_rng(seed)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -145,6 +146,20 @@ def test_cli_evaluates_and_prints_summary(
 ) -> None:
     checkpoint = tmp_path / "checkpoint.zip"
     checkpoint.write_bytes(b"fake-checkpoint")
+    manifest = tmp_path / "checkpoint.meta.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "agent": {"name": "cartpole", "model": "irrelevant"},
+                "task": {"name": "balance", "params": {}},
+                "sim": {"plugin": "mujoco"},
+                "algo": {"plugin": "ppo"},
+                "observation_shape": {"dims": [2], "dtype": "float32"},
+                "action_shape": {"dims": [1], "dtype": "float32"},
+            }
+        ),
+        encoding="utf-8",
+    )
     monkeypatch.setattr("weir.cli.eval.create_sim", lambda _name: FakeSim())
     monkeypatch.setattr("weir.cli.eval.create_algorithm", lambda _name: FakeAlgorithm())
     monkeypatch.setattr(
@@ -156,6 +171,8 @@ def test_cli_evaluates_and_prints_summary(
             str(checkpoint),
             "--episodes",
             "2",
+            "--override",
+            "task.params.x_threshold=2.5",
         ],
     )
 

@@ -33,9 +33,9 @@ def test_config_composes_defaults() -> None:
 
 
 def test_config_agent_override_swaps_model() -> None:
-    cfg = make_config(["agent=simple_humanoid"])
-    assert cfg.agent.name == "simple_humanoid"
-    assert "simple_humanoid.xml" in str(cfg.agent.model)
+    cfg = make_config(["agent=humanoid"])
+    assert cfg.agent.name == "berkeley_humanoid"
+    assert "berkeley_humanoid.xml" in str(cfg.agent.model)
 
 
 def test_config_task_override_applies_params() -> None:

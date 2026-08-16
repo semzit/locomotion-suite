@@ -9,7 +9,7 @@ import numpy as np
 from weir.cli.utils import add_checkpoint_arg, add_seed_arg, compose_config, guarded_main
 from weir.core.contracts import AlgorithmPlugin, SimBackend
 from weir.core.factory import create_algorithm, create_sim
-from weir.core.run import Run
+from weir.core.run import MANIFEST_NAME, Run
 from weir.core.utils import config_to_dict, resolve_model_path
 
 
@@ -63,28 +63,31 @@ def rollout_metrics(
 def run_eval(
     checkpoint: Path,
     *,
-    agent: str | None = None,
-    task: str | None = None,
     episodes: int,
     seed: int,
     max_steps: int,
     overrides: list[str] | None = None,
 ) -> dict[str, float]:
-    """Evaluate a checkpoint, driven by its manifest unless flags override it.
+    """Evaluate a checkpoint, driven by its manifest.
 
-    Flags and overrides layer on top of the manifest: the run's agent/task are
-    used as the base so e.g. ``--override task.params.x=1`` tweaks the run's
-    own task instead of switching to the defaults.
+    ``--override`` layers on top of the manifest: the run's agent/task are used
+    as the base so e.g. ``--override task.params.x=1`` tweaks the run's own
+    task.
     """
     run = Run.open(checkpoint)
     manifest = run.config
-    if manifest is not None and not (agent or task or overrides):
+    if manifest is None:
+        raise ValueError(
+            f"No manifest ({MANIFEST_NAME}) next to {checkpoint}: this checkpoint "
+            "predates run manifests; re-train to create one"
+        )
+    if not overrides:
         sim = run.sim()
         run.validate(sim)
         algorithm = run.algorithm()
     else:
-        base_agent = agent or _manifest_value(manifest, "agent", "name") or "humanoid"
-        base_task = task or _manifest_value(manifest, "task", "name") or "standing"
+        base_agent = str(manifest["agent"]["name"])
+        base_task = str(manifest["task"]["name"])
         cfg = compose_config(base_agent, base_task, overrides)
         agent_config = config_to_dict(cfg.agent)
         if "model" in agent_config:
@@ -103,29 +106,12 @@ def run_eval(
         sim.close()
 
 
-def _manifest_value(manifest: dict[str, Any] | None, section: str, key: str) -> str | None:
-    if manifest is None:
-        return None
-    value = manifest.get(section, {}).get(key)
-    return str(value) if value else None
-
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="weir-eval",
         description="Evaluate a trained checkpoint with deterministic rollouts.",
     )
     add_checkpoint_arg(parser)
-    parser.add_argument(
-        "--agent",
-        default=None,
-        help="Agent config group name; defaults to the run's manifest (configs/agent/).",
-    )
-    parser.add_argument(
-        "--task",
-        default=None,
-        help="Task config group name; defaults to the run's manifest (configs/task/).",
-    )
     parser.add_argument("--episodes", type=int, default=5, help="Episodes to roll out.")
     add_seed_arg(parser, help="Seed for the rollouts.")
     parser.add_argument("--max-steps", type=int, default=1000, help="Maximum steps per episode.")
@@ -133,7 +119,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--override",
         action="append",
         default=[],
-        help="Hydra override, repeatable (e.g. --override task.params.nq=13).",
+        help="Hydra override of the run's task, repeatable (e.g. --override task.params.nq=13).",
     )
     return parser
 
@@ -141,8 +127,6 @@ def build_parser() -> argparse.ArgumentParser:
 def _run_eval_from_args(args: argparse.Namespace) -> dict[str, Any]:
     metrics = run_eval(
         args.checkpoint,
-        agent=args.agent,
-        task=args.task,
         episodes=args.episodes,
         seed=args.seed,
         max_steps=args.max_steps,
@@ -150,8 +134,8 @@ def _run_eval_from_args(args: argparse.Namespace) -> dict[str, Any]:
     )
     run = Run.open(args.checkpoint)
     config = run.config or {}
-    agent_name = args.agent or str(config.get("agent", {}).get("name", "unknown"))
-    task_name = args.task or str(config.get("task", {}).get("name", "unknown"))
+    agent_name = str(config.get("agent", {}).get("name", "unknown"))
+    task_name = str(config.get("task", {}).get("name", "unknown"))
     return {
         "metrics": metrics,
         "checkpoint": str(args.checkpoint),

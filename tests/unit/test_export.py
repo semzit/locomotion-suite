@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -88,10 +89,27 @@ def test_verification_fails_against_different_policy(tmp_path: Path) -> None:
     assert not verify_export(algorithm.policy, onnx_path)
 
 
+def _write_manifest(directory: Path, *, plugin: str = "ppo", obs_dim: int = OBS_DIM) -> None:
+    (directory / "checkpoint.meta.json").write_text(
+        json.dumps(
+            {
+                "agent": {"name": "cartpole"},
+                "task": {"name": "balance"},
+                "sim": {"plugin": "mujoco"},
+                "algo": {"plugin": plugin},
+                "observation_shape": {"dims": [obs_dim], "dtype": "float32"},
+                "action_shape": {"dims": [ACTION_DIM], "dtype": "float32"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
 def test_cli_exports_and_verifies(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     checkpoint = tmp_path / "policy.pt"
     algorithm = FakeAlgorithm()
     algorithm.save(checkpoint)
+    _write_manifest(tmp_path)
     output = tmp_path / "cli_policy.onnx"
     monkeypatch.setattr("weir.cli.export.create_algorithm", lambda _name: FakeAlgorithm())
     monkeypatch.setattr(
@@ -103,8 +121,6 @@ def test_cli_exports_and_verifies(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
             str(checkpoint),
             "--output",
             str(output),
-            "--obs-dim",
-            str(OBS_DIM),
         ],
     )
 
@@ -118,6 +134,7 @@ def test_cli_returns_nonzero_on_verification_failure(
 ) -> None:
     checkpoint = tmp_path / "policy.pt"
     FakeAlgorithm().save(checkpoint)
+    _write_manifest(tmp_path)
     monkeypatch.setattr("weir.cli.export.create_algorithm", lambda _name: FakeAlgorithm())
     monkeypatch.setattr("weir.cli.export.verify_export", lambda *_args, **_kwargs: False)
     monkeypatch.setattr(
@@ -134,6 +151,21 @@ def test_cli_returns_nonzero_when_policy_export_unsupported(
 ) -> None:
     checkpoint = tmp_path / "policy.pt"
     checkpoint.write_text("ppo-checkpoint", encoding="utf-8")
+    _write_manifest(tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["weir-export", "--checkpoint", str(checkpoint), "--output", str(tmp_path / "policy.onnx")],
+    )
+
+    assert main() == 1
+
+
+def test_cli_rejects_checkpoint_without_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkpoint = tmp_path / "policy.pt"
+    FakeAlgorithm().save(checkpoint)
     monkeypatch.setattr(
         sys,
         "argv",

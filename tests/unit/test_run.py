@@ -9,7 +9,7 @@ from weir.core.run import Run
 from weir.envs.utils import MODELS_DIR
 
 CART_POLE = MODELS_DIR / "cartpole.xml"
-SIMPLE_HUMANOID = MODELS_DIR / "simple_humanoid.xml"
+BERKELEY = MODELS_DIR / "menagerie" / "berkeley_humanoid" / "berkeley_humanoid.xml"
 
 
 def make_run(
@@ -86,7 +86,7 @@ def test_validate_rejects_mismatched_action_shape(tmp_path: Path) -> None:
 
 
 def test_validate_ignores_humanoid_nq_injection(tmp_path: Path) -> None:
-    run = make_run(tmp_path, model=SIMPLE_HUMANOID, obs_dims=(25,), act_dims=(6,))
+    run = make_run(tmp_path, model=BERKELEY, obs_dims=(37,), act_dims=(12,))
     sim = run.sim()
     run.validate(sim)
     sim.close()

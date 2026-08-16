@@ -8,7 +8,7 @@ from weir.envs.utils import MODELS_DIR
 from weir.envs.wrappers.randomized import RandomizedSim
 
 CART_POLE = MODELS_DIR / "cartpole.xml"
-SIMPLE_HUMANOID = MODELS_DIR / "simple_humanoid.xml"
+BERKELEY = MODELS_DIR / "menagerie" / "berkeley_humanoid" / "berkeley_humanoid.xml"
 
 
 def make_wrapped(config: dict, model_path=CART_POLE) -> RandomizedSim:
@@ -46,26 +46,26 @@ def test_mujoco_sim_is_domain_randomizable() -> None:
 def test_empty_config_is_pass_through() -> None:
     def roll(sim: SimBackend) -> list[np.ndarray]:
         obs = [sim.reset(seed=3).copy()]
-        action = np.zeros(6, dtype=np.float32)
+        action = np.zeros(12, dtype=np.float32)
         for _ in range(5):
             obs.append(sim.step(action).observation.copy())
         return obs
 
-    bare = roll(make_bare(SIMPLE_HUMANOID))
-    wrapped = roll(make_wrapped({}, SIMPLE_HUMANOID))
+    bare = roll(make_bare(BERKELEY))
+    wrapped = roll(make_wrapped({}, BERKELEY))
     assert np.array_equal(bare, wrapped)
 
 
 def test_observation_noise_is_zero_mean() -> None:
-    bare = make_bare(SIMPLE_HUMANOID)
-    wrapped = make_wrapped({"noise_std": 0.5}, SIMPLE_HUMANOID)
+    bare = make_bare(BERKELEY)
+    wrapped = make_wrapped({"noise_std": 0.5}, BERKELEY)
     bare.reset(seed=1)
     wrapped.reset(seed=1)
-    action = np.zeros(6, dtype=np.float32)
+    action = np.zeros(12, dtype=np.float32)
     diffs = np.stack(
         [wrapped.step(action).observation - bare.step(action).observation for _ in range(40)]
     )
-    assert diffs.shape == (40, 25)
+    assert diffs.shape == (40, 37)
     assert abs(float(diffs.mean())) < 0.15
     assert abs(float(diffs.std()) - 0.5) < 0.15
 
@@ -99,9 +99,9 @@ def test_latency_delays_actions() -> None:
 
 def test_same_seed_reproduces_hardened_trajectory() -> None:
     def roll(seed: int) -> list[np.ndarray]:
-        sim = make_wrapped({"mass_scale": [0.8, 1.2], "noise_std": 0.1}, SIMPLE_HUMANOID)
+        sim = make_wrapped({"mass_scale": [0.8, 1.2], "noise_std": 0.1}, BERKELEY)
         obs = [sim.reset(seed=seed).copy()]
-        action = np.zeros(6, dtype=np.float32)
+        action = np.zeros(12, dtype=np.float32)
         for _ in range(5):
             obs.append(sim.step(action).observation.copy())
         return obs

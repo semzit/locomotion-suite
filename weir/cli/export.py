@@ -11,7 +11,7 @@ from torch import nn
 
 from weir.cli.utils import add_checkpoint_arg, guarded_main
 from weir.core.factory import create_algorithm
-from weir.core.run import Run
+from weir.core.run import MANIFEST_NAME, Run
 
 DEFAULT_OPSET = 17
 
@@ -70,19 +70,26 @@ def run_export(
     checkpoint: Path,
     output_path: Path,
     *,
-    algo: str | None = None,
-    obs_dim: int | None = None,
     batch: int = 1,
     samples: int = 5,
 ) -> Path:
     """Load a checkpoint, export its policy to ONNX, and verify onnxruntime parity.
 
-    The algorithm plugin and observation dimension come from the run manifest
-    unless explicitly overridden.
+    The algorithm plugin and observation dimension come from the run manifest.
     """
     run = Run.open(checkpoint)
-    plugin = algo or run.plugin("algo") or "ppo"
-    dim = obs_dim if obs_dim is not None else run.obs_dim() or 4
+    if run.config is None:
+        raise ValueError(
+            f"No manifest ({MANIFEST_NAME}) next to {checkpoint}: this checkpoint "
+            "predates run manifests; re-train to create one"
+        )
+    plugin = run.plugin("algo") or "ppo"
+    dim = run.obs_dim()
+    if dim is None:
+        raise ValueError(
+            f"No observation dimension in manifest next to {checkpoint}: this checkpoint "
+            "predates run manifests; re-train to create one"
+        )
     algorithm = create_algorithm(plugin)
     algorithm.load(Path(checkpoint))
     policy = algorithm.export_policy()
@@ -104,31 +111,9 @@ def main() -> int:
     parser.add_argument(
         "--output", type=Path, default=Path("policy.onnx"), help="Output ONNX file path."
     )
-    parser.add_argument(
-        "--algo",
-        default=None,
-        help="Algorithm name registered in the factory; defaults to the run's manifest.",
-    )
-    parser.add_argument(
-        "--obs-dim",
-        type=int,
-        default=None,
-        help="Observation dimension for the dummy input; defaults to the run's manifest.",
-    )
-    parser.add_argument("--batch", type=int, default=1, help="Batch size for the dummy input.")
-    parser.add_argument(
-        "--samples", type=int, default=5, help="Random batches used for onnxruntime verification."
-    )
 
     def run(args: argparse.Namespace) -> dict[str, object]:
-        output_path = run_export(
-            args.checkpoint,
-            args.output,
-            algo=args.algo,
-            obs_dim=args.obs_dim,
-            batch=args.batch,
-            samples=args.samples,
-        )
+        output_path = run_export(args.checkpoint, args.output)
         return {"checkpoint": str(args.checkpoint), "output": str(output_path)}
 
     return guarded_main(parser, run, "export")

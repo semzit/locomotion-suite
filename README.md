@@ -13,8 +13,8 @@ touching the training loop.
 Train, evaluate, record, and export a walking policy:
 
 ```bash
-# 1. Train PPO on the simple humanoid, walking task
-uv run weir-train agent=simple_humanoid task=walk_forward
+# 1. Train PPO on the humanoid, walking task
+uv run weir-train agent=humanoid task=walk_forward
 
 # 2. Evaluate the trained policy (mean reward, episode length, forward distance)
 uv run weir-eval --checkpoint outputs/2026-08-15/<run>/checkpoint.zip
@@ -36,7 +36,7 @@ interface from the config groups under `configs/` (`agent/`, `task/`, `sim/`, `a
 
 ### Swapping pieces at the command line
 
-- `agent=cartpole` / `agent=simple_humanoid` / `agent=humanoid` — different robots, same pipeline
+- `agent=cartpole` / `agent=humanoid` — different robots, same pipeline
 - `task=balance` / `task=standing` / `task=walk_forward` — different objectives (balance is the learnable toy task; `task=survive` gives a constant reward and learns nothing by design)
 - `sim=mujoco` — `SimBackend` implementations live in `weir/envs/backends/`
 - `algo=ppo` — `AlgorithmPlugin` implementations live in `weir/algo/`
