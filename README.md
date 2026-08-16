@@ -1,19 +1,22 @@
 # Weir
 
-Train a simulated legged agent to walk using reinforcement learning. A small, self-contained
-project: a `SimBackend` and an `AlgorithmPlugin` Protocol, a training loop that never imports a
-concrete implementation, Hydra config, and ONNX policy export.
+<p align="center">
+  <img src="assets/weir-hero.jpg" alt="Weir" width="520" />
+</p>
 
-The simulator and the algorithm are both interchangeable, chosen at the command line rather than
-hardcoded — so you can compare SB3 PPO against RLtools, or MuJoCo against Isaac Lab, without
-touching the training loop.
+*A weir* — a low dam that directs flow rather than blocking it. The project's earlier
+working name was **DAM** (Data · Algorithm · Machine); a weir is the friendlier dam.
+
+Train a simulated legged agent to walk using reinforcement learning. The simulator and the
+algorithm are both swappable at the command line — SB3 PPO vs RLtools, MuJoCo vs Isaac Lab —
+without touching the training loop.
 
 ## Quick demo
 
-See the pipeline in action in about three minutes — no GPU needed:
+About three minutes, no GPU:
 
 ```bash
-# 1. Train PPO on CartPole balance (~3 min on CPU)
+# 1. Train the cartpole balancer (~3 min on CPU)
 uv run weir-train agent=cartpole task=balance train.total_steps=100000
 
 # 2. Point at the newest checkpoint
@@ -22,18 +25,13 @@ CHECKPOINT=$(ls -t outputs/*/*/checkpoint.zip | head -1)
 # 3. Verify: episode length should reach the 500-step horizon
 uv run weir-eval --checkpoint "$CHECKPOINT"
 
-# 4. Render a video of the policy balancing — with disturbances
+# 4. Render it getting pushed around (body 2 is the pole; drop --perturb-* for calm)
 uv run weir-render --checkpoint "$CHECKPOINT" --output cartpole.mp4 --frames 250 \
   --perturb-force 8 --perturb-body 2
 ```
 
-After ~100k steps the policy balances for the entire episode (`mean_episode_length ≈ 500`).
-The rendered mp4 shows the classic cart-pole keeping the pole upright while getting pushed
-up to ~6° and recovering each time (body 2 is the pole; drop the `--perturb-*` flags for a
-calm video). This is the toy task — the walking policy is the real goal, shown in Workflow
-below.
-
-Here is what a trained balancer looks like under disturbances:
+After ~100k steps the policy balances the full episode (`mean_episode_length ≈ 500`),
+recovering from pushes up to ~6°.
 
 <p align="center" width="100%">
 <img src="assets/cartpole-balance-demo.gif" alt="Cart-pole policy balancing under disturbances" width="80%">
@@ -41,35 +39,30 @@ Here is what a trained balancer looks like under disturbances:
 
 ## Workflow
 
-Train, evaluate, record, and export a walking policy:
+Train, evaluate, record, and export:
 
 ```bash
-# 1. Train PPO on the humanoid, walking task
+# 1. Train the humanoid to walk
 uv run weir-train agent=humanoid task=walk_forward
 
-# 2. Evaluate the trained policy (mean reward, episode length, forward distance)
+# 2. Evaluate (mean reward, episode length, forward distance)
 uv run weir-eval --checkpoint outputs/2026-08-15/<run>/checkpoint.zip
 
-# 3. Record an mp4 of the policy walking
+# 3. Record a video
 uv run weir-render --checkpoint outputs/2026-08-15/<run>/checkpoint.zip --output walk.mp4
 
-# 4. Export the policy to a standalone .onnx file
+# 4. Export to a standalone .onnx file
 uv run weir-export --checkpoint outputs/2026-08-15/<run>/checkpoint.zip
 ```
 
-Every run writes a manifest (`checkpoint.meta.json`) next to the checkpoint recording the
-resolved configuration and observation/action shapes. `weir-eval`, `weir-render`, and
-`weir-export` rebuild the environment from it, so a checkpoint can't be paired with the
-wrong model — no flags needed. Flags remain as overrides where useful.
-
-`weir/cli/train.py` imports only the Protocols; Hydra selects which concrete class satisfies each
-interface from the config groups under `configs/` (`agent/`, `task/`, `sim/`, `algo/`).
+Every run writes a manifest (`checkpoint.meta.json`) beside the checkpoint with the resolved
+config and shapes; the tools above rebuild the environment from it, so a checkpoint can't be
+paired with the wrong model — no flags needed.
 
 ## Configuration
 
-Everything about a run lives in YAML under `configs/`, composed by Hydra at launch.
-`configs/train.yaml` declares the defaults: it picks one file from each group — an agent,
-a task, a sim, an algorithm — and Hydra merges them into a single config:
+Everything lives in YAML under `configs/`. `configs/train.yaml` picks one file per group —
+agent, task, sim, algo — and Hydra merges them:
 
 ```
 configs/
@@ -80,31 +73,20 @@ configs/
 └── algo/              # one algorithm per file: ppo.yaml
 ```
 
-**The full reference — every group, every knob, with examples — is in
-[`docs/configuration.md`](docs/configuration.md).**
+Full reference: [`docs/configuration.md`](docs/configuration.md).
 
-### Overriding at the command line
-
-Any composed value can be overridden with `key=value` arguments, without editing files:
+Any value can be overridden on the command line:
 
 ```bash
-# Swap a whole group (picks a different file from that group)
-uv run weir-train agent=humanoid task=walk_forward
-
-# Override a nested value inside a group
-uv run weir-train task.params.min_height=1.0
-
-# Override a top-level value
-uv run weir-train train.total_steps=500000
-
-# Combine as many as you like
-uv run weir-train agent=humanoid task=walk_forward algo.n_steps=4096 train.total_steps=1000000
+uv run weir-train agent=humanoid task=walk_forward        # swap a group
+uv run weir-train task.params.min_height=1.0              # nested value
+uv run weir-train train.total_steps=500000                # top-level value
+uv run weir-train agent=humanoid task=walk_forward algo.n_steps=4096
 ```
 
-Notes:
-- Values are typed: numbers parse as floats, `true`/`false` as booleans, `[64, 64]` as lists
-- Hydra refuses to *invent* keys — adding a brand-new key needs a `+` prefix (`+task.params.thing=1`)
-- `algo.checkpoint=<path>` resumes training from an existing checkpoint (weights only)
+- Values are typed: numbers, booleans, lists (`[64, 64]`)
+- New keys need a `+` prefix: `+task.params.thing=1`
+- `algo.checkpoint=<path>` resumes training (weights only)
 
 ## Repository layout
 
@@ -122,15 +104,8 @@ configs/            # Hydra config groups: agent/, task/, sim/, algo/
 
 ## Development checks
 
-Create the dev environment once:
-
 ```bash
 uv sync --group dev
-```
-
-Then run the checks:
-
-```bash
 uv run ruff check .
 uv run ruff format --check .
 uv run pyright
