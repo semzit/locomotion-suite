@@ -33,6 +33,10 @@ up to ~6° and recovering each time (body 2 is the pole; drop the `--perturb-*` 
 calm video). This is the toy task — the walking policy is the real goal, shown in Workflow
 below.
 
+Here is what a trained balancer looks like under kicks:
+
+<video src="assets/cartpole-balance-demo.mp4" controls muted loop width="520"></video>
+
 ## Workflow
 
 Train, evaluate, record, and export a walking policy:
@@ -59,13 +63,46 @@ wrong model — no flags needed. Flags remain as overrides where useful.
 `weir/cli/train.py` imports only the Protocols; Hydra selects which concrete class satisfies each
 interface from the config groups under `configs/` (`agent/`, `task/`, `sim/`, `algo/`).
 
-### Swapping pieces at the command line
+## Configuration
 
-- `agent=cartpole` / `agent=humanoid` — different robots, same pipeline
-- `task=balance` / `task=standing` / `task=walk_forward` — different objectives (balance is the learnable toy task; `task=survive` gives a constant reward and learns nothing by design)
-- `sim=mujoco` — `SimBackend` implementations live in `weir/envs/backends/`
-- `algo=ppo` — `AlgorithmPlugin` implementations live in `weir/algo/`
-- `algo.checkpoint=<path>` — resume training from an existing checkpoint
+Everything about a run lives in YAML under `configs/`, composed by Hydra at launch.
+`configs/train.yaml` declares the defaults: it picks one file from each group — an agent,
+a task, a sim, an algorithm — and Hydra merges them into a single config:
+
+```
+configs/
+├── train.yaml         # composition + train.seed, train.total_steps
+├── agent/             # one robot per file: cartpole.yaml, humanoid.yaml
+├── task/              # one objective per file: balance, standing, walk_forward, ...
+├── sim/               # one backend per file: mujoco.yaml
+└── algo/              # one algorithm per file: ppo.yaml
+```
+
+**The full reference — every group, every knob, with examples — is in
+[`docs/configuration.md`](docs/configuration.md).**
+
+### Overriding at the command line
+
+Any composed value can be overridden with `key=value` arguments, without editing files:
+
+```bash
+# Swap a whole group (picks a different file from that group)
+uv run weir-train agent=humanoid task=walk_forward
+
+# Override a nested value inside a group
+uv run weir-train task.params.min_height=1.0
+
+# Override a top-level value
+uv run weir-train train.total_steps=500000
+
+# Combine as many as you like
+uv run weir-train agent=humanoid task=walk_forward algo.n_steps=4096 train.total_steps=1000000
+```
+
+Notes:
+- Values are typed: numbers parse as floats, `true`/`false` as booleans, `[64, 64]` as lists
+- Hydra refuses to *invent* keys — adding a brand-new key needs a `+` prefix (`+task.params.thing=1`)
+- `algo.checkpoint=<path>` resumes training from an existing checkpoint (weights only)
 
 ## Repository layout
 
