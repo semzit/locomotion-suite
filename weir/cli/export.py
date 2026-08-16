@@ -27,6 +27,7 @@ def export_policy_to_onnx(
     output_path = Path(output_path)
     dummy_input = torch.randn(batch, obs_dim)
     policy.eval()
+    policy.cpu()  # the policy may have been trained on CUDA
     with torch.no_grad():
         torch.onnx.export(
             policy,

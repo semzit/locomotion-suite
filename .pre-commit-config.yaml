@@ -16,16 +16,16 @@ repos:
     hooks:
       - id: pyright
         name: pyright
-        entry: uv run pyright
+        entry: uv run --no-sync pyright
         language: system
         pass_filenames: false
       - id: vulture
         name: vulture
-        entry: uv run vulture
+        entry: uv run --no-sync vulture
         language: system
         pass_filenames: false
       - id: pytest
         name: pytest
-        entry: uv run pytest
+        entry: uv run --no-sync pytest
         language: system
         pass_filenames: false

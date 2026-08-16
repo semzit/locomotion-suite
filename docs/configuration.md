@@ -133,6 +133,7 @@ The `randomization` block only takes effect when `robust: true`.
 |---|---|---|
 | `plugin` | `ppo` | AlgorithmPlugin implementation in the factory. |
 | `checkpoint` | `null` | Checkpoint to resume from (weights only); `null` trains from scratch. |
+| `device` | `auto` | `auto` (CUDA when available, else CPU), `cpu`, or `cuda`. |
 | `net_arch` | `[64, 64]` | Hidden layer sizes of the MLP policy. |
 | `learning_rate` | `3.0e-4` | Adam learning rate. |
 | `n_steps` | `2048` | Rollout buffer size (steps per policy update). |
@@ -147,19 +148,25 @@ The `randomization` block only takes effect when `robust: true`.
 
 ## Example runs
 
+Commands pick a torch build via the `cpu` or `gpu` extra (see the README's GPU
+section); use the extra you synced with:
+
 ```bash
 # Default: train the cartpole balancer
-uv run weir-train
+uv run --extra cpu weir-train
 
 # Fast iteration on the toy: fewer steps, bigger minibatches
-uv run weir-train train.total_steps=50000 algo.batch_size=128
+uv run --extra cpu weir-train train.total_steps=50000 algo.batch_size=128
 
-# The real goal: humanoid walking, more exploration
-uv run weir-train agent=humanoid task=walk_forward algo.ent_coef=0.02 train.total_steps=2000000
+# The real goal: humanoid walking, more exploration, on the GPU
+uv run --extra gpu weir-train agent=humanoid task=walk_forward algo.ent_coef=0.02 train.total_steps=2000000
+
+# Force the device if auto-detection isn't what you want
+uv run --extra cpu weir-train agent=cartpole task=balance algo.device=cpu
 
 # Hardened training (sim-to-real: mass/friction randomization, noise, pushes)
-uv run weir-train agent=humanoid task=standing sim.robust=true
+uv run --extra cpu weir-train agent=humanoid task=standing sim.robust=true
 
 # Resume a run from its checkpoint
-uv run weir-train agent=humanoid task=walk_forward algo.checkpoint=outputs/2026-08-15/12-00-00/checkpoint.zip
+uv run --extra cpu weir-train agent=humanoid task=walk_forward algo.checkpoint=outputs/2026-08-15/12-00-00/checkpoint.zip
 ```

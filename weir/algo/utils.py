@@ -44,5 +44,6 @@ class DeterministicPolicy(nn.Module):
         self.policy = policy
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        actions, _, _ = self.policy(observations, deterministic=True)
+        device = next(self.policy.parameters()).device
+        actions, _, _ = self.policy(observations.to(device), deterministic=True)
         return actions

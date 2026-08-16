@@ -14,20 +14,20 @@ without touching the training loop.
 
 ## Quick demo
 
-About three minutes, no GPU:
+About three minutes, no GPU needed:
 
 ```bash
 # 1. Train the cartpole balancer (~3 min on CPU)
-uv run weir-train agent=cartpole task=balance train.total_steps=100000
+uv run --extra cpu weir-train agent=cartpole task=balance train.total_steps=100000
 
 # 2. Point at the newest checkpoint
 CHECKPOINT=$(ls -t outputs/*/*/checkpoint.zip | head -1)
 
 # 3. Verify: episode length should reach the 500-step horizon
-uv run weir-eval --checkpoint "$CHECKPOINT"
+uv run --extra cpu weir-eval --checkpoint "$CHECKPOINT"
 
 # 4. Render it getting pushed around (body 2 is the pole; drop --perturb-* for calm)
-uv run weir-render --checkpoint "$CHECKPOINT" --output cartpole.mp4 --frames 250 \
+uv run --extra cpu weir-render --checkpoint "$CHECKPOINT" --output cartpole.mp4 --frames 250 \
   --perturb-force 8 --perturb-body 2
 ```
 
@@ -44,21 +44,39 @@ Train, evaluate, record, and export:
 
 ```bash
 # 1. Train the humanoid to walk
-uv run weir-train agent=humanoid task=walk_forward
+uv run --extra cpu weir-train agent=humanoid task=walk_forward
 
 # 2. Evaluate (mean reward, episode length, forward distance)
-uv run weir-eval --checkpoint outputs/2026-08-15/<run>/checkpoint.zip
+uv run --extra cpu weir-eval --checkpoint outputs/2026-08-15/<run>/checkpoint.zip
 
 # 3. Record a video
-uv run weir-render --checkpoint outputs/2026-08-15/<run>/checkpoint.zip --output walk.mp4
+uv run --extra cpu weir-render --checkpoint outputs/2026-08-15/<run>/checkpoint.zip --output walk.mp4
 
 # 4. Export to a standalone .onnx file
-uv run weir-export --checkpoint outputs/2026-08-15/<run>/checkpoint.zip
+uv run --extra cpu weir-export --checkpoint outputs/2026-08-15/<run>/checkpoint.zip
 ```
 
 Every run writes a manifest (`checkpoint.meta.json`) beside the checkpoint with the resolved
 config and shapes; the tools above rebuild the environment from it, so a checkpoint can't be
 paired with the wrong model — no flags needed.
+
+## GPU (optional)
+
+torch is chosen per-extra: `--extra cpu` (default machines) or `--extra gpu`
+(NVIDIA machines, CUDA 13):
+
+```bash
+# CPU-only machines (the default)
+uv sync --group dev --extra cpu
+
+# NVIDIA machines: CUDA torch, ~2.5 GB
+uv sync --group dev --extra gpu
+```
+
+Every `uv run` command carries the extra you synced with. Training picks the device
+automatically (`algo.device: auto` in `configs/algo/ppo.yaml` — CUDA when available); force it
+with `algo.device=cpu` or `algo.device=cuda`. For small policies the CPU is often faster —
+the GPU pays off on the humanoid walk training.
 
 ## Configuration
 
@@ -106,10 +124,10 @@ configs/            # Hydra config groups: agent/, task/, sim/, algo/
 ## Development checks
 
 ```bash
-uv sync --group dev
-uv run ruff check .
-uv run ruff format --check .
-uv run vulture
-uv run pyright
-uv run pytest
+uv sync --group dev --extra cpu        # or --extra gpu on NVIDIA machines
+uv run --extra cpu ruff check .
+uv run --extra cpu ruff format --check .
+uv run --extra cpu vulture
+uv run --extra cpu pyright
+uv run --extra cpu pytest
 ```

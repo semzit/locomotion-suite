@@ -32,6 +32,7 @@ class PPOAlgorithm(AlgorithmPlugin):
             "MlpPolicy",
             SpacesOnly(observation_shape, action_shape),
             policy_kwargs={"net_arch": net_arch},
+            device=str(config.get("device", "auto")),
             learning_rate=float(config.get("learning_rate", 3e-4)),
             n_steps=int(config.get("n_steps", 2048)),
             batch_size=int(config.get("batch_size", 64)),

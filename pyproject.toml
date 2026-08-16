@@ -19,7 +19,30 @@ dependencies = [
     "onnxruntime>=1.28.0",
     "pydantic>=2.0",
     "stable-baselines3>=2.9.0",
-    "torch>=2.13.0",
+]
+
+# torch is chosen per-extra so each index maps to one build. Every command
+# must pick an extra: `--extra cpu` (default machines) or `--extra gpu`
+# (NVIDIA machines). Run without an extra and sb3's transitive torch would
+# resolve from PyPI (a CUDA build on Linux).
+#   uv sync --group dev --extra cpu
+#   uv sync --group dev --extra gpu
+[project.optional-dependencies]
+cpu = ["torch>=2.13.0"]
+gpu = ["torch>=2.13.0"]
+
+[tool.uv]
+conflicts = [
+    [
+        { extra = "cpu" },
+        { extra = "gpu" },
+    ],
+]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu130", extra = "gpu" },
 ]
 
 [project.scripts]
@@ -39,13 +62,18 @@ dev = [
     "vulture>=2.15",
 ]
 
+# The CPU index comes first: default resolution (torch>=2.13.0) lands on the
+# CPU build. The gpu extra pins torch==2.13.0+cu130, a build that only exists
+# on the cu130 index, so `uv sync --extra gpu` switches to CUDA wheels.
 [[tool.uv.index]]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
-[tool.uv.sources]
-torch = { index = "pytorch-cpu" }
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["weir"]
