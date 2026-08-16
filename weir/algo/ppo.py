@@ -48,17 +48,30 @@ class PPOAlgorithm(AlgorithmPlugin):
             max_grad_norm=float(config.get("max_grad_norm", 0.5)),
         )
 
-    def learn(self, env: Env, total_steps: int) -> dict[str, float]:
+    def learn(
+        self,
+        env: Env,
+        total_steps: int,
+        callback: Any | None = None,
+    ) -> dict[str, float]:
         self._require_model()
         self._model.set_env(env)
-        callback = None
+        callbacks: list[Any] = []
         if self._checkpoint_freq:
-            callback = CheckpointCallback(
-                save_freq=int(self._checkpoint_freq),
-                save_path=str(Path.cwd()),
-                name_prefix="checkpoint",
+            callbacks.append(
+                CheckpointCallback(
+                    save_freq=int(self._checkpoint_freq),
+                    save_path=str(Path.cwd()),
+                    name_prefix="checkpoint",
+                )
             )
-        self._model.learn(total_timesteps=total_steps, progress_bar=False, callback=callback)
+        if callback is not None:
+            callbacks.append(callback)
+        self._model.learn(
+            total_timesteps=total_steps,
+            progress_bar=False,
+            callback=callbacks or None,
+        )
         return {"total_steps": float(total_steps)}
 
     def act(self, observations: Any, deterministic: bool = False) -> Any:

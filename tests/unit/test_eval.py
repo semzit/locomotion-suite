@@ -71,7 +71,7 @@ class FakeAlgorithm:
         self.action_shape = action_shape
         self.config = config
 
-    def learn(self, env: Any, total_steps: int) -> dict[str, float]:
+    def learn(self, env: Any, total_steps: int, callback: Any | None = None) -> dict[str, float]:
         return {"total_steps": float(total_steps)}
 
     def act(self, observations: Any, deterministic: bool = False) -> np.ndarray:

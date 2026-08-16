@@ -20,3 +20,5 @@ dir
 diffuse
 specular
 ambient
+
+_on_step  # SB3 BaseCallback override

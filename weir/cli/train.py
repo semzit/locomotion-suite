@@ -7,6 +7,7 @@ from typing import Any
 
 import hydra
 from omegaconf import DictConfig
+from stable_baselines3.common.callbacks import BaseCallback
 
 from weir.cli.utils import setup_logging
 from weir.core.contracts import Shape
@@ -50,6 +51,24 @@ def _write_manifest(
     return manifest
 
 
+class _ManifestCallback(BaseCallback):
+    """Write a manifest beside each periodic checkpoint as it appears."""
+
+    def __init__(self, run_dir: Path, manifest_kwargs: dict[str, Any]) -> None:
+        super().__init__()
+        self._run_dir = run_dir
+        self._manifest_kwargs = manifest_kwargs
+        self._seen: set[Path] = set()
+
+    def _on_step(self) -> bool:
+        for checkpoint in self._run_dir.glob("checkpoint_*_steps.zip"):
+            if checkpoint in self._seen:
+                continue
+            self._seen.add(checkpoint)
+            _write_manifest(checkpoint, **self._manifest_kwargs)
+        return True
+
+
 def run(cfg: DictConfig) -> dict[str, Any]:
     """Train the algorithm on the simulator for the configured number of steps."""
     agent = config_to_dict(cfg.agent, "model")
@@ -79,10 +98,6 @@ def run(cfg: DictConfig) -> dict[str, Any]:
     )
 
     env = GymEnv(sim)
-    metrics = algorithm.learn(env, total_steps)
-
-    checkpoint = Path.cwd() / "checkpoint.zip"
-    algorithm.save(checkpoint)
     manifest_kwargs = {
         "agent": agent,
         "task": task,
@@ -93,9 +108,13 @@ def run(cfg: DictConfig) -> dict[str, Any]:
         "observation_shape": observation_shape,
         "action_shape": action_shape,
     }
+    metrics = algorithm.learn(
+        env, total_steps, callback=_ManifestCallback(Path.cwd(), manifest_kwargs)
+    )
+
+    checkpoint = Path.cwd() / "checkpoint.zip"
+    algorithm.save(checkpoint)
     _write_manifest(checkpoint, **manifest_kwargs)
-    for periodic in Path.cwd().glob("checkpoint_*_steps.zip"):
-        _write_manifest(periodic, **manifest_kwargs)
     env.close()
 
     log_event(
