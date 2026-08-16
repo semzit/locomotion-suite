@@ -109,6 +109,7 @@ configs/            # Hydra config groups: agent/, task/, sim/, algo/
 uv sync --group dev
 uv run ruff check .
 uv run ruff format --check .
+uv run vulture
 uv run pyright
 uv run pytest
 ```

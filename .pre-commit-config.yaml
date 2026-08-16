@@ -19,6 +19,11 @@ repos:
         entry: uv run pyright
         language: system
         pass_filenames: false
+      - id: vulture
+        name: vulture
+        entry: uv run vulture
+        language: system
+        pass_filenames: false
       - id: pytest
         name: pytest
         entry: uv run pytest

@@ -36,6 +36,7 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "ruff>=0.6",
+    "vulture>=2.15",
 ]
 
 [[tool.uv.index]]
@@ -64,12 +65,18 @@ skip_covered = true
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+extend-exclude = ["weir/.vulture_whitelist.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
+[tool.vulture]
+paths = ["weir", "tests"]
+min_confidence = 60
+
 [tool.pyright]
 include = ["weir", "tests"]
+exclude = ["weir/.vulture_whitelist.py"]
 typeCheckingMode = "basic"
 reportMissingImports = "none"
 reportMissingTypeStubs = false

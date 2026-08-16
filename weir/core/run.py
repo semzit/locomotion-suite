@@ -15,7 +15,6 @@ from typing import Any
 
 from weir.core.contracts import AlgorithmPlugin, SimBackend
 from weir.core.factory import create_algorithm, create_sim
-from weir.envs.gym_env import GymEnv
 from weir.envs.wrappers.randomized import RandomizedSim
 
 MANIFEST_NAME = "checkpoint.meta.json"
@@ -58,12 +57,6 @@ class Run:
         algorithm.load(self._checkpoint)
         return algorithm
 
-    def algorithm_for(self, plugin: str) -> AlgorithmPlugin:
-        """Create a named plugin and load the checkpoint weights into it."""
-        algorithm = create_algorithm(plugin)
-        algorithm.load(self._checkpoint)
-        return algorithm
-
     def sim(self) -> SimBackend:
         """Build the simulator the run was trained with (hardening included)."""
         config = self._require_config()
@@ -73,12 +66,6 @@ class Run:
         sim = self.build_sim(sim_config)
         sim.load(agent_config, {**sim_config, "task": task_config})
         return sim
-
-    def env(self) -> GymEnv:
-        """The run's gymnasium environment, validating the shapes match."""
-        sim = self.sim()
-        self.validate(sim)
-        return GymEnv(sim)
 
     def obs_dim(self) -> int | None:
         """The flat observation dimension the policy was trained with."""

@@ -19,7 +19,6 @@ class FakeSim:
         self.delta = delta
         self.terminate_after = terminate_after
         self.steps = 0
-        self.closed = False
         self.agent_config: dict[str, Any] | None = None
         self.sim_config: dict[str, Any] | None = None
 
@@ -47,7 +46,7 @@ class FakeSim:
         return Shape(dims=(1,), dtype="float32")
 
     def close(self) -> None:
-        self.closed = True
+        pass
 
 
 class SeededFakeSim(FakeSim):
@@ -63,7 +62,6 @@ class FakeAlgorithm:
     """AlgorithmPlugin double that always acts with a zero action."""
 
     def __init__(self) -> None:
-        self.loaded_path: Path | None = None
         self.deterministic: list[bool] = []
 
     def configure(
@@ -84,7 +82,7 @@ class FakeAlgorithm:
         Path(path).write_text("fake-checkpoint", encoding="utf-8")
 
     def load(self, path: Path) -> None:
-        self.loaded_path = Path(path)
+        pass
 
     def export_policy(self) -> Any:
         return None

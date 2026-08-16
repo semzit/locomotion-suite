@@ -8,7 +8,6 @@ import numpy as np
 from omegaconf import OmegaConf
 
 ROOT = Path(__file__).resolve().parents[2]
-PACKAGE_DIR = ROOT / "weir"
 CONFIG_DIR = ROOT / "configs"
 
 
@@ -89,3 +88,5 @@ def log_event(logger: logging.Logger, event: str, **fields: Any) -> None:
     """Log an INFO event with structured fields, avoiding reserved LogRecord keys."""
     extra = {key: value for key, value in fields.items() if key not in _RESERVED}
     logger.info(event, extra=extra)
+
+
