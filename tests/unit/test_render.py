@@ -122,6 +122,70 @@ def test_render_episode_paces_frames_to_realtime(tmp_path: Path) -> None:
     assert len(frames) == 6
 
 
+def test_render_episode_applies_perturbations(tmp_path: Path) -> None:
+    """With perturb options, the sim receives pushes and they are released."""
+
+    class RecordingSim(MuJoCoSim):
+        def __init__(self) -> None:
+            super().__init__()
+            self.pushes: list[tuple[float, int]] = []
+            self.clears = 0
+
+        def reset(self, seed: int | None = None) -> np.ndarray:
+            return np.zeros(4, dtype=np.float32)
+
+        @property
+        def dt(self) -> float:
+            return 0.02
+
+        def step(self, action: object) -> object:
+            step = type(
+                "Step",
+                (),
+                {
+                    "observation": np.zeros(4, dtype=np.float32),
+                    "terminated": False,
+                    "truncated": False,
+                },
+            )
+            return step()
+
+        def render_frame(self, width: int = 0, height: int = 0) -> np.ndarray:
+            return np.zeros((height, width, 3), dtype=np.uint8)
+
+        def apply_perturbation(self, force: object, body: int = 1) -> None:
+            force_array = np.asarray(force, dtype=float)
+            if np.all(force_array == 0.0):
+                self.clears += 1
+            else:
+                self.pushes.append((float(force_array[0]), body))
+
+    class FakeAlgorithm:
+        def act(self, observation: object, deterministic: bool = False) -> np.ndarray:
+            return np.zeros(1, dtype=np.float32)
+
+    sim = RecordingSim()
+    algo = FakeAlgorithm()
+    render_episode(
+        sim,
+        algo,  # type: ignore[arg-type]
+        tmp_path / "perturbed.mp4",
+        frames_to_capture=4,
+        frame_interval=1,
+        width=160,
+        height=120,
+        fps=15,
+        seed=0,
+        perturb_force=5.0,
+        perturb_prob=1.0,  # push every step
+        perturb_body=2,
+    )
+    sim.close()
+    assert len(sim.pushes) == 4
+    assert all(body == 2 for _, body in sim.pushes)
+    assert sim.clears == 4  # every push was released the same step
+
+
 def test_render_episode_feeds_updated_observations(tmp_path: Path) -> None:
     """The policy must see each post-step observation, not just the reset state."""
 

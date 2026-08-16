@@ -161,11 +161,11 @@ class MuJoCoSim(SimBackend):
             model.dof_damping[:] = params["dof_damping"]
         mujoco.mj_forward(model, data)
 
-    def apply_perturbation(self, force: Action) -> None:
+    def apply_perturbation(self, force: Action, body: int = 1) -> None:
         data = self._require_data()
-        root_body = 1  # xfrc_applied row 0 is the world body; 1 is the root/movable body
-        data.xfrc_applied[root_body, :3] = np.asarray(force, dtype=float)[:3]
-        data.xfrc_applied[root_body, 3:] = 0.0
+        # xfrc_applied row 0 is the world body; 1 is the root/movable body
+        data.xfrc_applied[body, :3] = np.asarray(force, dtype=float)[:3]
+        data.xfrc_applied[body, 3:] = 0.0
 
     def _observe(self, data: mujoco.MjData) -> Observation:
         return np.concatenate([data.qpos, data.qvel]).astype(np.float32)

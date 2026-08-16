@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import Any
 
 import imageio.v2 as imageio
+import numpy as np
 
 from weir.cli.utils import add_seed_arg
-from weir.core.contracts import AlgorithmPlugin
+from weir.core.contracts import AlgorithmPlugin, DomainRandomizable
 from weir.core.factory import create_algorithm
 from weir.core.run import MANIFEST_NAME, Run
 from weir.core.utils import resolve_model_path
@@ -26,21 +27,40 @@ def render_episode(
     height: int = 480,
     fps: int = 30,
     seed: int = 0,
+    perturb_force: float = 0.0,
+    perturb_prob: float = 0.0,
+    perturb_body: int = 1,
 ) -> Path:
     """Roll out a policy and write the frames to an mp4 file at output_path.
 
     By default one frame is captured per ``1 / (dt * fps)`` simulation steps,
     so the video plays at roughly realtime speed regardless of the sim
     timestep. Pass ``frame_interval=1`` to capture every step.
+
+    When ``perturb_force > 0``, random perturbation pushes (magnitude drawn
+    from ``N(0, perturb_force)``) are applied to the given body with
+    probability ``perturb_prob`` each step, showing the policy recovering
+    from disturbances. Requires a ``DomainRandomizable`` sim (MuJoCoSim).
     """
     if frame_interval is None:
         frame_interval = max(1, round(1.0 / (sim.dt * fps)))
+    rng = np.random.default_rng(seed + 1)
     frames: list[Any] = []
     observation = sim.reset(seed=seed)
     steps = 0
     while frames_to_capture is None or len(frames) < frames_to_capture:
+        if perturb_force > 0 and perturb_prob > 0 and rng.random() < perturb_prob:
+            if isinstance(sim, DomainRandomizable):
+                sim.apply_perturbation(rng.normal(0.0, perturb_force, size=3), body=perturb_body)
+                perturbed = True
+            else:
+                perturbed = False
+        else:
+            perturbed = False
         action = algo.act(observation, deterministic=True)
         result = sim.step(action)
+        if perturbed:
+            sim.apply_perturbation(np.zeros(3), body=perturb_body)  # one-step push, then release
         observation = result.observation
         steps += 1
         if steps % frame_interval == 0:
@@ -84,6 +104,24 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--width", type=int, default=640)
     parser.add_argument("--height", type=int, default=480)
     parser.add_argument("--fps", type=int, default=30)
+    parser.add_argument(
+        "--perturb-force",
+        type=float,
+        default=0.0,
+        help="Random push magnitude; show the policy recovering from disturbances.",
+    )
+    parser.add_argument(
+        "--perturb-prob",
+        type=float,
+        default=0.05,
+        help="Per-step probability of a perturbation push (only with --perturb-force).",
+    )
+    parser.add_argument(
+        "--perturb-body",
+        type=int,
+        default=1,
+        help="Body index to push (1=root; for cartpole 2 is the pole).",
+    )
     parser.add_argument(
         "--checkpoint",
         type=Path,
@@ -192,6 +230,9 @@ def _play(sim: MuJoCoSim, algo: AlgorithmPlugin, args: argparse.Namespace) -> in
             height=args.height,
             fps=args.fps,
             seed=args.seed,
+            perturb_force=args.perturb_force,
+            perturb_prob=args.perturb_prob,
+            perturb_body=args.perturb_body,
         )
     except (RuntimeError, TypeError, ValueError) as error:
         print(f"weir-render: {error}", file=sys.stderr)

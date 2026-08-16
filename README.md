@@ -22,13 +22,16 @@ CHECKPOINT=$(ls -t outputs/*/*/checkpoint.zip | head -1)
 # 3. Verify: episode length should reach the 500-step horizon
 uv run weir-eval --checkpoint "$CHECKPOINT"
 
-# 4. Render a video of the policy balancing
-uv run weir-render --checkpoint "$CHECKPOINT" --output cartpole.mp4 --frames 250
+# 4. Render a video of the policy balancing — with kicks
+uv run weir-render --checkpoint "$CHECKPOINT" --output cartpole.mp4 --frames 250 \
+  --perturb-force 8 --perturb-body 2
 ```
 
-After ~100k steps the policy balances for the entire episode (`mean_episode_length ≈ 500`),
-and the mp4 shows the classic cart-pole keeping the pole upright. This is the toy task —
-the walking policy is the real goal, shown in Workflow below.
+After ~100k steps the policy balances for the entire episode (`mean_episode_length ≈ 500`).
+The rendered mp4 shows the classic cart-pole keeping the pole upright while getting kicked
+up to ~6° and recovering each time (body 2 is the pole; drop the `--perturb-*` flags for a
+calm video). This is the toy task — the walking policy is the real goal, shown in Workflow
+below.
 
 ## Workflow
 
