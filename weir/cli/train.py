@@ -11,7 +11,7 @@ from omegaconf import DictConfig
 from weir.cli.utils import setup_logging
 from weir.core.contracts import Shape
 from weir.core.factory import create_algorithm
-from weir.core.run import MANIFEST_NAME, build_sim
+from weir.core.run import MANIFEST_NAME, Run
 from weir.core.utils import CONFIG_DIR, config_to_dict, log_event
 from weir.envs.gym_env import GymEnv
 
@@ -57,7 +57,7 @@ def run(cfg: DictConfig) -> dict[str, Any]:
     task = config_to_dict(cfg.task)
     algorithm_config = config_to_dict(cfg.algo, "checkpoint")
 
-    sim = build_sim(sim_config)
+    sim = Run.build_sim(sim_config)
     algorithm = create_algorithm(str(algorithm_config["plugin"]))
 
     sim.load(agent, {**sim_config, "task": task})

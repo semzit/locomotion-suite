@@ -9,7 +9,7 @@ from omegaconf import DictConfig
 
 from weir.cli.eval import run_eval
 from weir.cli.train import run
-from weir.core.run import build_sim
+from weir.core.run import Run
 from weir.core.utils import CONFIG_DIR
 from weir.envs.backends.mujoco import MuJoCoSim
 from weir.envs.wrappers.randomized import RandomizedSim
@@ -140,6 +140,6 @@ def test_run_resumes_from_checkpoint(monkeypatch: pytest.MonkeyPatch, tmp_path: 
 
 
 def test_build_sim_wraps_when_robust() -> None:
-    assert isinstance(build_sim({"plugin": "mujoco"}), MuJoCoSim)
-    hardened = build_sim({"plugin": "mujoco", "robust": True, "randomization": {}})
+    assert isinstance(Run.build_sim({"plugin": "mujoco"}), MuJoCoSim)
+    hardened = Run.build_sim({"plugin": "mujoco", "robust": True, "randomization": {}})
     assert isinstance(hardened, RandomizedSim)

@@ -8,7 +8,6 @@ from typing import Any
 import imageio.v2 as imageio
 import numpy as np
 
-from weir.cli.utils import add_output_arg, add_seed_arg
 from weir.core.contracts import AlgorithmPlugin, DomainRandomizable
 from weir.core.factory import create_algorithm
 from weir.core.run import MANIFEST_NAME, Run
@@ -107,7 +106,7 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="KEY=VALUE",
         help="Task parameter for demo renders, repeatable (no --checkpoint).",
     )
-    add_output_arg(parser, default="video.mp4")
+    parser.add_argument("--output", default="video.mp4", help="Output file path.")
     _add_video_args(parser)
     parser.add_argument(
         "--perturb-force",
@@ -133,7 +132,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Trained checkpoint to play back; renders the run's own environment.",
     )
-    add_seed_arg(parser)
+    parser.add_argument("--seed", type=int, default=0, help="Seed for the run.")
     return parser
 
 

@@ -21,20 +21,20 @@ from weir.envs.wrappers.randomized import RandomizedSim
 MANIFEST_NAME = "checkpoint.meta.json"
 
 
-def build_sim(sim_config: dict[str, Any]) -> SimBackend:
-    """Construct the simulator named in config, wrapping it when hardened."""
-    sim = create_sim(str(sim_config["plugin"]))
-    if sim_config.get("robust", False):
-        sim = RandomizedSim(sim, sim_config.get("randomization", {}))
-    return sim
-
-
 class Run:
     """A training run: a checkpoint plus its manifest, if present."""
 
     def __init__(self, checkpoint: Path, config: dict[str, Any] | None) -> None:
         self._checkpoint = Path(checkpoint)
         self._config = config
+
+    @staticmethod
+    def build_sim(sim_config: dict[str, Any]) -> SimBackend:
+        """Construct the simulator named in config, wrapping it when hardened."""
+        sim = create_sim(str(sim_config["plugin"]))
+        if sim_config.get("robust", False):
+            sim = RandomizedSim(sim, sim_config.get("randomization", {}))
+        return sim
 
     @classmethod
     def open(cls, checkpoint: Path | str) -> Run:
@@ -70,7 +70,7 @@ class Run:
         sim_config = dict(config["sim"])
         agent_config = dict(config["agent"])
         task_config = dict(config["task"])
-        sim = build_sim(sim_config)
+        sim = self.build_sim(sim_config)
         sim.load(agent_config, {**sim_config, "task": task_config})
         return sim
 

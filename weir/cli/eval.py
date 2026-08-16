@@ -6,10 +6,10 @@ from typing import Any
 
 import numpy as np
 
-from weir.cli.utils import add_checkpoint_arg, add_seed_arg, compose_config, guarded_main
+from weir.cli.utils import compose_config, guarded_main
 from weir.core.contracts import AlgorithmPlugin, SimBackend
 from weir.core.factory import create_algorithm
-from weir.core.run import MANIFEST_NAME, Run, build_sim
+from weir.core.run import MANIFEST_NAME, Run
 from weir.core.utils import config_to_dict
 
 _FIXED_OVERRIDE_KEYS = ("agent", "algo")
@@ -96,7 +96,7 @@ def run_eval(
         sim_config = config_to_dict(cfg.sim)
         task_config = config_to_dict(cfg.task)
         algorithm_config = config_to_dict(cfg.algo)
-        sim = build_sim(sim_config)
+        sim = Run.build_sim(sim_config)
         sim.load(agent_config, {**sim_config, "task": task_config})
         run.validate(sim)
         algorithm = create_algorithm(str(algorithm_config["plugin"]))
@@ -124,9 +124,11 @@ def build_parser() -> argparse.ArgumentParser:
         prog="weir-eval",
         description="Evaluate a trained checkpoint with deterministic rollouts.",
     )
-    add_checkpoint_arg(parser)
+    parser.add_argument(
+        "--checkpoint", type=Path, required=True, help="Path to the algorithm checkpoint."
+    )
     parser.add_argument("--episodes", type=int, default=5, help="Episodes to roll out.")
-    add_seed_arg(parser, help="Seed for the rollouts.")
+    parser.add_argument("--seed", type=int, default=0, help="Seed for the rollouts.")
     parser.add_argument("--max-steps", type=int, default=1000, help="Maximum steps per episode.")
     parser.add_argument(
         "--override",

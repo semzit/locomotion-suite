@@ -32,23 +32,6 @@ def compose_config(agent: str, task: str, overrides: list[str] | None = None) ->
         )
 
 
-def add_checkpoint_arg(parser: argparse.ArgumentParser) -> None:
-    """Add the shared --checkpoint flag."""
-    parser.add_argument(
-        "--checkpoint", type=Path, required=True, help="Path to the algorithm checkpoint."
-    )
-
-
-def add_seed_arg(parser: argparse.ArgumentParser, help: str = "Seed for the run.") -> None:
-    """Add the shared --seed flag."""
-    parser.add_argument("--seed", type=int, default=0, help=help)
-
-
-def add_output_arg(parser: argparse.ArgumentParser, default: str) -> None:
-    """Add the shared --output flag."""
-    parser.add_argument("--output", default=default, help="Output file path.")
-
-
 def guarded_main(
     parser: argparse.ArgumentParser,
     runner: Callable[[argparse.Namespace], dict[str, Any]],
