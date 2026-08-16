@@ -44,8 +44,26 @@ def test_action_shape_reports_bounds() -> None:
     assert shape.low.shape == (1,)
 
 
-def test_action_shape_falls_back_when_ctrlrange_degenerate() -> None:
-    sim = make_sim(MODELS / "no_ctrlrange.xml")
+_NO_CTRLRANGE_XML = """\
+<mujoco model="no_ctrlrange">
+  <worldbody>
+    <geom name="floor" type="plane" size="5 5 0.01"/>
+    <body name="pole" pos="0 0 0.1">
+      <joint name="hinge" type="hinge" axis="0 1 0" range="-1.0 1.0"/>
+      <geom name="arm" type="capsule" size="0.02 0.2" pos="0 0 0.2"/>
+    </body>
+  </worldbody>
+  <actuator>
+    <motor name="arm" joint="hinge" gear="10"/>
+  </actuator>
+</mujoco>
+"""
+
+
+def test_action_shape_falls_back_when_ctrlrange_degenerate(tmp_path: Path) -> None:
+    model = tmp_path / "no_ctrlrange.xml"
+    model.write_text(_NO_CTRLRANGE_XML, encoding="utf-8")
+    sim = make_sim(model)
     shape = sim.action_shape()
     assert shape.low is not None and shape.high is not None
     assert np.all(shape.low == -1.0)

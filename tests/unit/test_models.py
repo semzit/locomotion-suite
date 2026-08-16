@@ -17,9 +17,8 @@ def _model_path(name: str) -> Path:
     [
         _model_path("cartpole.xml"),
         _model_path("menagerie/berkeley_humanoid/berkeley_humanoid.xml"),
-        _model_path("no_ctrlrange.xml"),
     ],
-    ids=["cartpole", "berkeley_humanoid", "no_ctrlrange"],
+    ids=["cartpole", "berkeley_humanoid"],
 )
 def test_model_loads_and_steps(xml_path: Path) -> None:
     model = mujoco.MjModel.from_xml_path(str(xml_path))
