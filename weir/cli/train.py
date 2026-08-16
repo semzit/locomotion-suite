@@ -22,7 +22,7 @@ def _shape_record(shape: Shape) -> dict[str, object]:
     return {"dims": list(shape.dims), "dtype": shape.dtype}
 
 
-def write_manifest(
+def _write_manifest(
     checkpoint: Path,
     *,
     agent: dict[str, Any],
@@ -83,7 +83,7 @@ def run(cfg: DictConfig) -> dict[str, Any]:
 
     checkpoint = Path.cwd() / "checkpoint.zip"
     algorithm.save(checkpoint)
-    write_manifest(
+    _write_manifest(
         checkpoint,
         agent=agent,
         task=task,
