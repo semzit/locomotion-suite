@@ -122,6 +122,36 @@ def test_render_episode_paces_frames_to_realtime(tmp_path: Path) -> None:
     assert len(frames) == 6
 
 
+def test_render_episode_feeds_updated_observations(tmp_path: Path) -> None:
+    """The policy must see each post-step observation, not just the reset state."""
+
+    class RecordingAlgorithm:
+        def __init__(self) -> None:
+            self.seen: list[bytes] = []
+
+        def act(self, observation: object, deterministic: bool = False) -> np.ndarray:
+            self.seen.append(np.asarray(observation, dtype=np.float32).tobytes())
+            return np.ones(1, dtype=np.float32)  # push the cart so the state evolves
+
+    sim = make_sim()  # cartpole, survive: never terminates
+    algo = RecordingAlgorithm()
+    output = tmp_path / "recorded.mp4"
+    render_episode(
+        sim,
+        algo,  # type: ignore[arg-type]
+        output,
+        frames_to_capture=4,
+        frame_interval=1,
+        width=160,
+        height=120,
+        fps=15,
+        seed=0,
+    )
+    sim.close()
+    assert len(algo.seen) == 4
+    assert len(set(algo.seen)) == 4  # every act saw a different state
+
+
 def test_cli_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     output = tmp_path / "cli.mp4"
     monkeypatch.setattr(

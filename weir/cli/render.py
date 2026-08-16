@@ -39,8 +39,9 @@ def render_episode(
     observation = sim.reset(seed=seed)
     steps = 0
     while frames_to_capture is None or len(frames) < frames_to_capture:
-        action = algo.act(observation, deterministic=False)
+        action = algo.act(observation, deterministic=True)
         result = sim.step(action)
+        observation = result.observation
         steps += 1
         if steps % frame_interval == 0:
             frames.append(sim.render_frame(width, height))
