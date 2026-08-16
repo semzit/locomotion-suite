@@ -168,3 +168,23 @@ def test_rotate_vector_rotates_wxyz_quaternion() -> None:
     up = rotate_vector(quarter_turn, (0.0, 0.0, 1.0))
     assert np.allclose(forward, [0.0, 1.0, 0.0])
     assert np.allclose(up, [0.0, 0.0, 1.0])
+
+
+def test_walk_forward_progress_rewards_forward_motion() -> None:
+    task = WalkForwardTask(nq=19, min_height=0.3, progress_coef=2.0)
+    obs = _make_obs(height=0.6, yaw=0.0, forward_vel=0.5)
+    prev = _make_obs(height=0.6, yaw=0.0, forward_vel=0.5)
+    prev[0] = obs[0] - 0.1  # moved 0.1m forward
+    action = np.zeros(1, dtype=np.float32)
+    with_progress = task.reward(obs, action, prev_observation=prev)
+    assert with_progress > task.reward(obs, action)
+    assert pytest.approx(with_progress - task.reward(obs, action)) == 0.2
+
+
+def test_walk_forward_height_rewards_keeping_torso_up() -> None:
+    task = WalkForwardTask(nq=19, min_height=0.3, height_coef=2.0)
+    action = np.zeros(1, dtype=np.float32)
+    high = _make_obs(height=0.6, yaw=0.0, forward_vel=0.0)
+    low = _make_obs(height=0.45, yaw=0.0, forward_vel=0.0)
+    assert task.reward(high, action) > task.reward(low, action)
+    assert pytest.approx(task.reward(high, action) - task.reward(low, action)) == 0.3

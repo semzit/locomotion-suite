@@ -41,6 +41,7 @@ class BalanceTask:
         observation: Observation,
         action: Action,
         prev_action: Action | None = None,
+        prev_observation: Observation | None = None,
     ) -> float:
         return 1.0
 

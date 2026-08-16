@@ -20,6 +20,7 @@ class SurviveTask:
         observation: Observation,
         action: Action,
         prev_action: Action | None = None,
+        prev_observation: Observation | None = None,
     ) -> float:
         return self.live_reward
 

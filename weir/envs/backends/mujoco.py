@@ -20,6 +20,7 @@ class MuJoCoSim(SimBackend):
         self._time_limit = float("inf")
         self._renderer: mujoco.Renderer | None = None
         self._last_action: Action | None = None
+        self._last_observation: Observation | None = None
         self._initial_noise = 0.0
 
     def load(self, agent_config: dict[str, Any], sim_config: dict[str, Any]) -> None:
@@ -44,6 +45,7 @@ class MuJoCoSim(SimBackend):
         model = self._require_model()
         data = self._require_data()
         self._last_action = None
+        self._last_observation = None
         mujoco.mj_resetData(model, data)
         if seed is not None and model.nq > 7:
             rng = np.random.default_rng(seed)
@@ -66,11 +68,14 @@ class MuJoCoSim(SimBackend):
         action_f32 = action.astype(np.float32)
         step = SimStep(
             observation=observation,
-            reward=float(task.reward(observation, action_f32, self._last_action)),
+            reward=float(
+                task.reward(observation, action_f32, self._last_action, self._last_observation)
+            ),
             terminated=bool(task.terminated(observation)),
             truncated=bool(data.time >= self._time_limit),
         )
         self._last_action = action_f32
+        self._last_observation = observation.copy()
         return step
 
     def observation_shape(self) -> Shape:

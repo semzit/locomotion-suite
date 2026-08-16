@@ -21,6 +21,7 @@ class StandingTask:
         observation: Observation,
         action: Action,
         prev_action: Action | None = None,
+        prev_observation: Observation | None = None,
     ) -> float:
         return 0.0 if self.terminated(observation) else self.live_reward
 

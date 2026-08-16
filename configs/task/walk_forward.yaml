@@ -1,8 +1,10 @@
 name: walk_forward
 params:
-  min_height: 0.3
-  forward_coef: 2.0
-  heading_coef: 1.0
-  upright_coef: 0.5
-  alive_reward: 1.0
-  action_rate_coef: 0.02
+  min_height: 0.45
+  forward_coef: 4.0
+  heading_coef: 0.8
+  upright_coef: 0.3
+  alive_reward: 0.1
+  action_rate_coef: 0.01
+  progress_coef: 2.0
+  height_coef: 2.0

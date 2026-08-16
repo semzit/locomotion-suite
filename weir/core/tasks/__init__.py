@@ -25,8 +25,9 @@ __all__ = [
 class Task(Protocol):
     """Environment task: maps simulator state to reward and termination.
 
-    ``prev_action`` is the action from the previous step (None on the first
-    step of an episode), enabling action-rate penalties.
+    ``prev_action`` and ``prev_observation`` are from the previous step
+    (None on the first step of an episode), enabling action-rate penalties
+    and progress-based rewards.
     """
 
     def reward(
@@ -34,6 +35,7 @@ class Task(Protocol):
         observation: Observation,
         action: Action,
         prev_action: Action | None = None,
+        prev_observation: Observation | None = None,
     ) -> float: ...
     def terminated(self, observation: Observation) -> bool: ...
 
