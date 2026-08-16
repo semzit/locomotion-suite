@@ -55,6 +55,32 @@ def test_config_to_dict_resolves_section() -> None:
     assert result == {"plugin": "mujoco", "time_limit": 10.0}
 
 
+def test_config_to_dict_resolves_path_keys() -> None:
+    cfg = DictConfig(
+        {
+            "model": "weir/models/cartpole.xml",
+            "checkpoint": None,
+            "plugin": "mujoco",
+        }
+    )
+    result = config_to_dict(cfg, "model", "checkpoint")
+    assert result["model"] == str((ROOT / "weir/models/cartpole.xml").resolve())
+    assert result["checkpoint"] is None
+    assert result["plugin"] == "mujoco"
+
+
+def test_config_to_dict_missing_path_key_left_alone() -> None:
+    cfg = DictConfig({"plugin": "mujoco"})
+    result = config_to_dict(cfg, "model")
+    assert result == {"plugin": "mujoco"}
+
+
+def test_config_to_dict_absolute_path_stays() -> None:
+    absolute = str(MODELS_DIR / "cartpole.xml")
+    result = config_to_dict(DictConfig({"model": absolute}), "model")
+    assert result["model"] == absolute
+
+
 def test_log_event_attaches_fields(caplog) -> None:
     logger = logging.getLogger("weir.core.utils.test")
     with caplog.at_level("INFO", logger="weir.core.utils.test"):

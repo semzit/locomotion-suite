@@ -46,9 +46,17 @@ def rotate_vector(quat: np.ndarray, vector: tuple[float, float, float]) -> np.nd
     )
 
 
-def config_to_dict(section: Any) -> dict[str, Any]:
-    """Coerce an OmegaConf section into a resolved plain dict."""
-    return cast(dict[str, Any], OmegaConf.to_container(section, resolve=True) or {})
+def config_to_dict(section: Any, *path_keys: str) -> dict[str, Any]:
+    """Coerce an OmegaConf section into a resolved plain dict.
+
+    Values under *path_keys are resolved to absolute paths via
+    resolve_model_path; missing or empty (e.g. null) values are left as-is.
+    """
+    resolved = cast(dict[str, Any], OmegaConf.to_container(section, resolve=True) or {})
+    for key in path_keys:
+        if resolved.get(key):
+            resolved[key] = resolve_model_path(str(resolved[key]))
+    return resolved
 
 
 _RESERVED = {

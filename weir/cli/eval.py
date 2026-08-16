@@ -10,7 +10,7 @@ from weir.cli.utils import add_checkpoint_arg, add_seed_arg, compose_config, gua
 from weir.core.contracts import AlgorithmPlugin, SimBackend
 from weir.core.factory import create_algorithm, create_sim
 from weir.core.run import MANIFEST_NAME, Run
-from weir.core.utils import config_to_dict, resolve_model_path
+from weir.core.utils import config_to_dict
 
 
 def rollout_metrics(
@@ -89,9 +89,7 @@ def run_eval(
         base_agent = str(manifest["agent"]["name"])
         base_task = str(manifest["task"]["name"])
         cfg = compose_config(base_agent, base_task, overrides)
-        agent_config = config_to_dict(cfg.agent)
-        if "model" in agent_config:
-            agent_config["model"] = resolve_model_path(str(agent_config["model"]))
+        agent_config = config_to_dict(cfg.agent, "model")
         sim_config = config_to_dict(cfg.sim)
         task_config = config_to_dict(cfg.task)
         algorithm_config = config_to_dict(cfg.algo)
