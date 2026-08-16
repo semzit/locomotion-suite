@@ -205,3 +205,16 @@ def test_rollout_conforms_to_shapes(seed: int, steps: int) -> None:
         assert isinstance(result.reward, float)
         assert isinstance(result.terminated, bool)
         assert isinstance(result.truncated, bool)
+
+
+def test_initial_noise_randomizes_unseeded_resets() -> None:
+    sim = make_sim(CART_POLE, initial_noise=0.0)
+    a = sim.reset()
+    b = sim.reset()
+    assert np.array_equal(a, b)
+
+    noisy = make_sim(MENAGERIE, initial_noise=0.1)
+    c = noisy.reset()
+    d = noisy.reset()
+    assert not np.array_equal(c, d)
+    noisy.close()

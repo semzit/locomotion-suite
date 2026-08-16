@@ -20,6 +20,7 @@ class MuJoCoSim(SimBackend):
         self._time_limit = float("inf")
         self._renderer: mujoco.Renderer | None = None
         self._last_action: Action | None = None
+        self._initial_noise = 0.0
 
     def load(self, agent_config: dict[str, Any], sim_config: dict[str, Any]) -> None:
         model_path = str(agent_config["model"])
@@ -37,6 +38,7 @@ class MuJoCoSim(SimBackend):
             task_params["nq"] = model.nq
         self._task = task_type(**task_params)
         self._time_limit = float(sim_config.get("time_limit", float("inf")))
+        self._initial_noise = float(sim_config.get("initial_noise", 0.0))
 
     def reset(self, seed: int | None = None) -> Observation:
         model = self._require_model()
@@ -46,6 +48,10 @@ class MuJoCoSim(SimBackend):
         if seed is not None and model.nq > 7:
             rng = np.random.default_rng(seed)
             data.qpos[7:] += rng.normal(0.0, 0.05, size=model.nq - 7)
+            mujoco.mj_forward(model, data)
+        elif self._initial_noise > 0 and model.nq > 7:
+            rng = np.random.default_rng(seed)
+            data.qpos[7:] += rng.normal(0.0, self._initial_noise, size=model.nq - 7)
             mujoco.mj_forward(model, data)
         return self._observe(data)
 
