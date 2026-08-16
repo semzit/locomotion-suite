@@ -46,6 +46,7 @@ def render_episode(
     rng = np.random.default_rng(seed + 1)
     frames: list[Any] = []
     observation = sim.reset(seed=seed)
+    frames.append(sim.render_frame(width, height))
     steps = 0
     while frames_to_capture is None or len(frames) < frames_to_capture:
         if perturb_force > 0 and perturb_prob > 0 and rng.random() < perturb_prob:
@@ -66,6 +67,17 @@ def render_episode(
             frames.append(sim.render_frame(width, height))
         if result.terminated or result.truncated:
             break
+    if frames_to_capture is not None and len(frames) < frames_to_capture:
+        print(
+            f"weir-render: episode ended after {steps} steps; captured "
+            f"{len(frames)} of {frames_to_capture} requested frames",
+            file=sys.stderr,
+        )
+    if not frames:
+        raise RuntimeError(
+            "no frames were captured; the episode ended before the first frame interval "
+            f"({frame_interval} steps). Try --frame-interval 1"
+        )
     imageio.mimsave(output_path, frames, fps=fps)
     return output_path
 
