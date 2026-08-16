@@ -181,9 +181,9 @@ def test_render_episode_applies_perturbations(tmp_path: Path) -> None:
         perturb_body=2,
     )
     sim.close()
-    assert len(sim.pushes) == 4
+    assert len(sim.pushes) == 3  # initial frame consumes one frame slot
     assert all(body == 2 for _, body in sim.pushes)
-    assert sim.clears == 4  # every push was released the same step
+    assert sim.clears == 3  # every push was released the same step
 
 
 def test_render_episode_feeds_updated_observations(tmp_path: Path) -> None:
@@ -212,8 +212,8 @@ def test_render_episode_feeds_updated_observations(tmp_path: Path) -> None:
         seed=0,
     )
     sim.close()
-    assert len(algo.seen) == 4
-    assert len(set(algo.seen)) == 4  # every act saw a different state
+    assert len(algo.seen) == 3  # initial frame consumes one frame slot
+    assert len(set(algo.seen)) == 3  # every act saw a different state
 
 
 def test_cli_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
