@@ -41,7 +41,7 @@ def test_config_agent_override_swaps_model() -> None:
 def test_config_task_override_applies_params() -> None:
     cfg = make_config(["task=standing"])
     assert cfg.task.name == "standing"
-    assert cfg.task.params.min_height == 0.8
+    assert cfg.task.params.min_height == 0.3
 
 
 def test_run_trains_a_short_run(
