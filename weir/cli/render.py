@@ -8,7 +8,7 @@ from typing import Any
 import imageio.v2 as imageio
 import numpy as np
 
-from weir.cli.utils import add_output_arg, add_seed_arg, add_video_args
+from weir.cli.utils import add_output_arg, add_seed_arg
 from weir.core.contracts import AlgorithmPlugin, DomainRandomizable
 from weir.core.factory import create_algorithm
 from weir.core.run import MANIFEST_NAME, Run
@@ -71,6 +71,20 @@ def render_episode(
     return output_path
 
 
+def _add_video_args(parser: argparse.ArgumentParser) -> None:
+    """Video-encoding flags: frames, frame interval, size, fps."""
+    parser.add_argument("--frames", type=int, default=120)
+    parser.add_argument(
+        "--frame-interval",
+        type=int,
+        default=None,
+        help="Simulation steps per video frame; defaults to realtime pacing (1 / dt / fps).",
+    )
+    parser.add_argument("--width", type=int, default=640)
+    parser.add_argument("--height", type=int, default=480)
+    parser.add_argument("--fps", type=int, default=30)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="weir-render",
@@ -94,7 +108,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Task parameter for demo renders, repeatable (no --checkpoint).",
     )
     add_output_arg(parser, default="video.mp4")
-    add_video_args(parser)
+    _add_video_args(parser)
     parser.add_argument(
         "--perturb-force",
         type=float,
