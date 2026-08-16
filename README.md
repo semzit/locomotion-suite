@@ -22,25 +22,22 @@ CHECKPOINT=$(ls -t outputs/*/*/checkpoint.zip | head -1)
 # 3. Verify: episode length should reach the 500-step horizon
 uv run weir-eval --checkpoint "$CHECKPOINT"
 
-# 4. Render a video of the policy balancing — with kicks
+# 4. Render a video of the policy balancing — with disturbances
 uv run weir-render --checkpoint "$CHECKPOINT" --output cartpole.mp4 --frames 250 \
   --perturb-force 8 --perturb-body 2
 ```
 
 After ~100k steps the policy balances for the entire episode (`mean_episode_length ≈ 500`).
-The rendered mp4 shows the classic cart-pole keeping the pole upright while getting kicked
+The rendered mp4 shows the classic cart-pole keeping the pole upright while getting pushed
 up to ~6° and recovering each time (body 2 is the pole; drop the `--perturb-*` flags for a
 calm video). This is the toy task — the walking policy is the real goal, shown in Workflow
 below.
 
-Here is what a trained balancer looks like under kicks:
+Here is what a trained balancer looks like under disturbances:
 
 <p align="center" width="100%">
-<video src="https://github.com/user-attachments/assets/edd2b375-55d8-43bb-9167-7b81eaeb9c77" width="80%" controls></video>
+<video src="https://github.com/user-attachments/assets/c62709e5-723c-4864-854d-7d4626b894eb" width="80%" controls></video>
 </p>
-
-The video is hosted as a GitHub user attachment (uploaded via issue #3); the local source
-file lives in `assets/cartpole-balance-demo.mp4` (H.264, 24 KB).
 
 ## Workflow
 
