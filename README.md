@@ -36,14 +36,11 @@ below.
 Here is what a trained balancer looks like under kicks:
 
 <p align="center" width="100%">
-<video src="https://github.com/user-attachments/assets/PASTE-THE-LINK-GENERATED-FROM-A-GITHUB-ISSUE-UPLOAD" width="80%" controls></video>
+<video src="https://github.com/semzit/weir/releases/download/demo-video/cartpole-balance-demo.mp4" width="80%" controls></video>
 </p>
 
-> To generate the video link: open any issue in this repository, drag
-> `assets/cartpole-balance-demo.mp4` into the text box (it uploads and produces
-> a `github.com/user-attachments/assets/...` link), then paste that URL over the
-> placeholder above. The file is already H.264-encoded and 24&nbsp;KB, so GitHub
-> hosts it fine. The local copy stays in `assets/` as a fallback.
+The video is hosted as a GitHub release asset (`demo-video`); the local source file lives
+in `assets/cartpole-balance-demo.mp4` (H.264, 24 KB).
 
 ## Workflow
 
