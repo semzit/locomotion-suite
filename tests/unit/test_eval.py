@@ -160,7 +160,7 @@ def test_cli_evaluates_and_prints_summary(
         ),
         encoding="utf-8",
     )
-    monkeypatch.setattr("weir.cli.eval.create_sim", lambda _name: FakeSim())
+    monkeypatch.setattr("weir.cli.eval.build_sim", lambda _name: FakeSim())
     monkeypatch.setattr("weir.cli.eval.create_algorithm", lambda _name: FakeAlgorithm())
     monkeypatch.setattr(
         sys,
@@ -185,7 +185,7 @@ def test_cli_evaluates_and_prints_summary(
 def test_cli_returns_nonzero_on_missing_checkpoint(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("weir.cli.eval.create_sim", lambda _name: FakeSim())
+    monkeypatch.setattr("weir.cli.eval.build_sim", lambda _name: FakeSim())
     monkeypatch.setattr(
         sys,
         "argv",
