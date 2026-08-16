@@ -49,8 +49,13 @@ pose" is not memorizable.
 
 ## Retry checklist (when the pipeline is ready)
 
-- [ ] **Vectorized envs landed** (`n_envs` via `DummyVecEnv`) — 8× experience
-      diversity per update and batched inference; revisit the GPU on this path
+- [ ] **Vectorized envs landed** (`algo.n_envs` via `DummyVecEnv`) — 8×
+      experience diversity per update and batched inference
+      (measured: humanoid 8000 steps — single 22s, DummyVecEnv×8 30.5s,
+      SubprocVecEnv×8 77s. The sim is cheap (~0.05 ms/step) and the policy
+      (~1 ms) is the bottleneck, so in-process vectorization wins over
+      multi-process: SubprocVecEnv's per-step IPC overhead dwarfs the sim.
+      Diversity, not parallelism, is the value of vectorizing here)
 - [ ] **Keep exploration alive** — try `ent_coef 0.1+`, or a larger net; verify
       the policy's action std does not collapse (checkpoint at ~500k)
 - [ ] **Try RLtools as a second engine** — built for fast humanoid training;

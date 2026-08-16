@@ -22,3 +22,4 @@ specular
 ambient
 
 _on_step  # SB3 BaseCallback override
+rollout_buffer  # SB3 model attribute reallocated for vectorized envs

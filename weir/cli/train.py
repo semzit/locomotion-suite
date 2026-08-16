@@ -8,9 +8,10 @@ from typing import Any
 import hydra
 from omegaconf import DictConfig
 from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.vec_env import DummyVecEnv
 
 from weir.cli.utils import setup_logging
-from weir.core.contracts import Shape
+from weir.core.contracts import Shape, SimBackend
 from weir.core.factory import create_algorithm
 from weir.core.run import Run
 from weir.core.utils import CONFIG_DIR, config_to_dict, log_event
@@ -69,6 +70,34 @@ class _ManifestCallback(BaseCallback):
         return True
 
 
+def _make_env(
+    sim: SimBackend,
+    sim_config: dict[str, Any],
+    task: dict[str, Any],
+    agent: dict[str, Any],
+    n_envs: int,
+) -> GymEnv | DummyVecEnv:
+    """Build the training environment, vectorized when n_envs > 1.
+
+    DummyVecEnv runs the envs in one process (sequential stepping). The sim
+    is cheap (~0.05 ms/step) relative to the policy (~1 ms), so parallelism
+    is not the win here — experience diversity (N different starting states
+    per update) and batched policy inference are. SubprocVecEnv was measured
+    slower: its per-step IPC overhead dwarfs the sim time. Each factory
+    builds a fresh sim from the config, so only plain config dicts are
+    shared (the caller's ``sim`` is never moved).
+    """
+    if n_envs <= 1:
+        return GymEnv(sim)
+
+    def factory() -> GymEnv:
+        extra = Run.build_sim(sim_config)
+        extra.load(agent, {**sim_config, "task": task})
+        return GymEnv(extra)
+
+    return DummyVecEnv([factory for _ in range(n_envs)])
+
+
 def run(cfg: DictConfig) -> dict[str, Any]:
     """Train the algorithm on the simulator for the configured number of steps."""
     agent = config_to_dict(cfg.agent, "model")
@@ -97,7 +126,8 @@ def run(cfg: DictConfig) -> dict[str, Any]:
         total_steps=total_steps,
     )
 
-    env = GymEnv(sim)
+    n_envs = int(algorithm_config.get("n_envs", 1))
+    env = _make_env(sim, sim_config, task, agent, n_envs)
     manifest_kwargs = {
         "agent": agent,
         "task": task,
@@ -116,6 +146,8 @@ def run(cfg: DictConfig) -> dict[str, Any]:
     algorithm.save(checkpoint)
     _write_manifest(checkpoint, **manifest_kwargs)
     env.close()
+    if n_envs > 1:
+        sim.close()  # the main-process sim is unused by the vectorized envs
 
     log_event(
         logger,

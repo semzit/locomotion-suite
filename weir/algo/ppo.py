@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 from gymnasium import Env
 from stable_baselines3 import PPO
+from stable_baselines3.common.buffers import RolloutBuffer
 from stable_baselines3.common.callbacks import CheckpointCallback
 from torch import nn
 
@@ -25,9 +26,12 @@ class PPOAlgorithm(AlgorithmPlugin):
         self.observation_shape = observation_shape
         self.action_shape = action_shape
         self._checkpoint_freq: int | None = None
+        self._n_envs = int(config.get("n_envs", 1))
         checkpoint = config.get("checkpoint")
         if checkpoint:
             self._model = PPO.load(str(checkpoint))
+            if self._n_envs != 1:
+                self._model.n_envs = self._n_envs
             return
         self._checkpoint_freq = config.get("checkpoint_freq")
         net_arch = list(config.get("net_arch", [64, 64]))
@@ -47,6 +51,7 @@ class PPOAlgorithm(AlgorithmPlugin):
             vf_coef=float(config.get("vf_coef", 0.5)),
             max_grad_norm=float(config.get("max_grad_norm", 0.5)),
         )
+        self._model.n_envs = self._n_envs
 
     def learn(
         self,
@@ -56,6 +61,20 @@ class PPOAlgorithm(AlgorithmPlugin):
     ) -> dict[str, float]:
         self._require_model()
         self._model.set_env(env)
+        if self._n_envs > 1:
+            # SB3 2.9 allocates the rollout buffer at construction (n_envs=1);
+            # recreate it for the vectorized environment.
+            model = self._model
+            buffer_class = model.rollout_buffer_class or RolloutBuffer
+            model.rollout_buffer = buffer_class(
+                model.n_steps,
+                cast(Any, model.observation_space),
+                cast(Any, model.action_space),
+                device=model.device,
+                gamma=model.gamma,
+                gae_lambda=model.gae_lambda,
+                n_envs=env.num_envs,
+            )
         callbacks: list[Any] = []
         if self._checkpoint_freq:
             callbacks.append(

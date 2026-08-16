@@ -63,7 +63,7 @@ class AlgorithmPlugin(Protocol):
     ) -> None: ...
     def learn(
         self,
-        env: Env,
+        env: Env | Any,
         total_steps: int,
         callback: Any | None = None,
     ) -> dict[str, float]: ...
