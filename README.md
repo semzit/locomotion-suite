@@ -36,7 +36,7 @@ below.
 Here is what a trained balancer looks like under disturbances:
 
 <p align="center" width="100%">
-<video src="https://github.com/user-attachments/assets/c62709e5-723c-4864-854d-7d4626b894eb" width="80%" controls></video>
+<img src="assets/cartpole-balance-demo.gif" alt="Cart-pole policy balancing under disturbances" width="80%">
 </p>
 
 ## Workflow
