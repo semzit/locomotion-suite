@@ -4,8 +4,9 @@
   <img src="assets/weir-hero.jpg" alt="Weir" width="520" />
 </p>
 
-*A weir* — a low dam that directs flow rather than blocking it. The project's earlier
-working name was **DAM** (Data · Algorithm · Machine); a weir is the friendlier dam.
+> *A weir* — a low dam that directs flow rather than blocking it. The project's
+> earlier working name was **DAM** (Data · Algorithm · Machine); a weir is the
+> friendlier dam.
 
 Train a simulated legged agent to walk using reinforcement learning. The simulator and the
 algorithm are both swappable at the command line — SB3 PPO vs RLtools, MuJoCo vs Isaac Lab —
