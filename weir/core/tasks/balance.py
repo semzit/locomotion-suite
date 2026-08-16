@@ -11,15 +11,40 @@ from weir.core.contracts import Action, Observation
 class BalanceTask:
     """CartPole balance: reward every step, terminate when the pole falls.
 
-    Ported from Gymnasium's CartPole-v1:
+    The reward and termination semantics are exactly the reward-relevant lines
+    of Gymnasium's ``CartPoleEnv.step`` (with the default
+    ``sutton_barto_reward=False``), plus the two thresholds set in its
+    ``__init__``:
 
-    | Gymnasium (Farama Foundation), "CartPole-v1".
-    | https://github.com/Farama-Foundation/Gymnasium — file
-    | ``gymnasium/envs/classic_control/cartpole.py``. MIT License.
+    | Gymnasium (Farama Foundation), "CartPole-v1" — MIT License.
+    | https://github.com/Farama-Foundation/Gymnasium, file
+    | ``gymnasium/envs/classic_control/cartpole.py``, which itself credits
+    | "Classic cart-pole system implemented by Rich Sutton et al.",
+    | http://incompleteideas.net/sutton/book/code/pole.c
+    | (permalink: https://perma.cc/C9ZM-652R).
 
-    Semantics: ``+1`` reward per step while ``|cart x| <= x_threshold`` and
-    ``|pole angle| <= theta_threshold`` (12 degrees), terminating otherwise.
-    The observation layout is ``[x, theta, x_dot, theta_dot]``.
+    Source lines::
+
+        self.theta_threshold_radians = 12 * 2 * math.pi / 360   # __init__
+        self.x_threshold = 2.4                                  # __init__
+        terminated = bool(                                      # step()
+            x < -self.x_threshold
+            or x > self.x_threshold
+            or theta < -self.theta_threshold_radians
+            or theta > self.theta_threshold_radians
+        )
+        if not terminated:
+            reward = 0.0 if self._sutton_barto_reward else 1.0  # step()
+        elif self.steps_beyond_terminated is None:
+            reward = -1.0 if self._sutton_barto_reward else 1.0  # step()
+        else:
+            reward = -1.0 if self._sutton_barto_reward else 0.0  # step()
+
+    i.e. ``+1`` on every step (including the termination step), terminating
+    when ``|x| > 2.4`` or ``|theta| > 12 degrees``. One adaptation: our
+    observation layout is MuJoCo's ``qpos||qvel`` order, ``[x, theta,
+    x_dot, theta_dot]`` — Gymnasium's state is ``[x, x_dot, theta,
+    theta_dot]`` — so ``terminated`` reads ``obs[0]`` and ``obs[1]``.
     """
 
     x_threshold: float = 2.4
