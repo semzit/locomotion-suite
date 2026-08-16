@@ -44,6 +44,25 @@ def add_seed_arg(parser: argparse.ArgumentParser, help: str = "Seed for the run.
     parser.add_argument("--seed", type=int, default=0, help=help)
 
 
+def add_output_arg(parser: argparse.ArgumentParser, default: str) -> None:
+    """Add the shared --output flag."""
+    parser.add_argument("--output", default=default, help="Output file path.")
+
+
+def add_video_args(parser: argparse.ArgumentParser) -> None:
+    """Add the shared video-encoding flags (frames, size, fps)."""
+    parser.add_argument("--frames", type=int, default=120)
+    parser.add_argument(
+        "--frame-interval",
+        type=int,
+        default=None,
+        help="Simulation steps per video frame; defaults to realtime pacing (1 / dt / fps).",
+    )
+    parser.add_argument("--width", type=int, default=640)
+    parser.add_argument("--height", type=int, default=480)
+    parser.add_argument("--fps", type=int, default=30)
+
+
 def guarded_main(
     parser: argparse.ArgumentParser,
     runner: Callable[[argparse.Namespace], dict[str, Any]],

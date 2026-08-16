@@ -9,7 +9,7 @@ import onnxruntime as ort
 import torch
 from torch import nn
 
-from weir.cli.utils import add_checkpoint_arg, guarded_main
+from weir.cli.utils import add_checkpoint_arg, add_output_arg, guarded_main
 from weir.core.factory import create_algorithm
 from weir.core.run import MANIFEST_NAME, Run
 
@@ -108,9 +108,7 @@ def main() -> int:
         description="Export a trained algorithm policy to a standalone ONNX file."
     )
     add_checkpoint_arg(parser)
-    parser.add_argument(
-        "--output", type=Path, default=Path("policy.onnx"), help="Output ONNX file path."
-    )
+    add_output_arg(parser, default="policy.onnx")
 
     def run(args: argparse.Namespace) -> dict[str, object]:
         output_path = run_export(args.checkpoint, args.output)
