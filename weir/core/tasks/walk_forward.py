@@ -12,25 +12,24 @@ from weir.core.utils import rotate_vector
 class WalkForwardTask:
     """Walk forward along world +x while staying upright; terminate on falling.
 
-    The reward blend ports the standard legged-locomotion reward terms from
-    Isaac Lab's reward catalog:
+    The reward blend ports standard legged-locomotion reward terms from Isaac
+    Lab (BSD-3-Clause), https://github.com/isaac-sim/IsaacLab:
 
-    | Isaac Lab (NVIDIA), "Isaac Lab".
-    | https://github.com/isaac-sim/IsaacLab — file
-    | ``source/isaaclab/isaaclab/envs/mdp/rewards/basic_rewards.py``.
-    | MIT License.
+    - ``alive_reward``: ``is_alive``,
+      source/isaaclab/isaaclab/envs/mdp/rewards.py:32
+    - ``action_rate_l2`` (squared action delta penalty):
+      source/isaaclab/isaaclab/envs/mdp/rewards.py:252
+    - uprightness (cosine of the base tilt): ``upright_posture_bonus`` via
+      ``obs.base_up_proj``,
+      source/isaaclab_tasks/.../manager_based/classic/humanoid/mdp/rewards.py:22
+    - heading (base forward projected on the goal direction):
+      ``move_to_target_bonus`` via ``obs.base_heading_proj``, same file:30
+    - forward velocity (heading-projected forward speed): in the spirit of
+      the velocity-tracking terms, e.g. ``track_lin_vel_xy_exp``,
+      source/isaaclab/isaaclab/envs/mdp/rewards.py:304
 
-    Terms ported (each adapted to this project's stateless observation
-    layout — no asset/phase tensors, just the root freejoint slice):
-
-    - ``upright_posture``: cosine of the base tilt (base up vector dot world up)
-    - ``heading_consistency``: base forward vector dot goal heading (world +x)
-    - ``root_lin_vel`` forward term: forward speed in the heading direction
-    - ``alive_reward``: per-step survival bonus
-    - ``action_rate_l2``: penalty on the squared change in action (uses the
-      previous step's action via ``prev_action``)
-
-    Assumes the observation begins with the root freejoint: obs[2] is the
+    Each term is adapted to this project's stateless observation layout —
+    no asset/command tensors, just the root freejoint slice: obs[2] is the
     body height above the floor, obs[3:7] is the root quaternion in
     (w, x, y, z) order, and obs[nq] is the root linear x-velocity (qvel[0]).
     """

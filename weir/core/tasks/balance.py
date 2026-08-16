@@ -11,40 +11,26 @@ from weir.core.contracts import Action, Observation
 class BalanceTask:
     """CartPole balance: reward every step, terminate when the pole falls.
 
-    The reward and termination semantics are exactly the reward-relevant lines
-    of Gymnasium's ``CartPoleEnv.step`` (with the default
-    ``sutton_barto_reward=False``), plus the two thresholds set in its
-    ``__init__``:
+    The reward and termination semantics are those of Gymnasium's CartPole-v1
+    (Barto, Sutton & Anderson's cart-pole problem, via Sutton et al.'s
+    pole.c):
 
-    | Gymnasium (Farama Foundation), "CartPole-v1" — MIT License.
-    | https://github.com/Farama-Foundation/Gymnasium, file
-    | ``gymnasium/envs/classic_control/cartpole.py``, which itself credits
+    | Gymnasium (Farama Foundation), file
+    | ``gymnasium/envs/classic_control/cartpole.py`` (BSD-3-Clause),
+    | https://github.com/Farama-Foundation/Gymnasium — itself credited to
     | "Classic cart-pole system implemented by Rich Sutton et al.",
     | http://incompleteideas.net/sutton/book/code/pole.c
     | (permalink: https://perma.cc/C9ZM-652R).
 
-    Source lines::
+    Cited lines: ``theta_threshold_radians`` and ``x_threshold`` at
+    L135-136 of ``CartPoleEnv.__init__``; ``terminated`` at L198-204 and
+    the per-step rewards at L206/211/220 of ``step``.
 
-        self.theta_threshold_radians = 12 * 2 * math.pi / 360   # __init__
-        self.x_threshold = 2.4                                  # __init__
-        terminated = bool(                                      # step()
-            x < -self.x_threshold
-            or x > self.x_threshold
-            or theta < -self.theta_threshold_radians
-            or theta > self.theta_threshold_radians
-        )
-        if not terminated:
-            reward = 0.0 if self._sutton_barto_reward else 1.0  # step()
-        elif self.steps_beyond_terminated is None:
-            reward = -1.0 if self._sutton_barto_reward else 1.0  # step()
-        else:
-            reward = -1.0 if self._sutton_barto_reward else 0.0  # step()
-
-    i.e. ``+1`` on every step (including the termination step), terminating
-    when ``|x| > 2.4`` or ``|theta| > 12 degrees``. One adaptation: our
-    observation layout is MuJoCo's ``qpos||qvel`` order, ``[x, theta,
-    x_dot, theta_dot]`` — Gymnasium's state is ``[x, x_dot, theta,
-    theta_dot]`` — so ``terminated`` reads ``obs[0]`` and ``obs[1]``.
+    Semantics: ``+1`` reward on every step (including the termination step)
+    while ``|x| <= 2.4`` and ``|theta| <= 12 deg``, terminating otherwise.
+    One adaptation: our observation layout is MuJoCo's ``qpos||qvel`` order
+    ``[x, theta, x_dot, theta_dot]`` — Gymnasium's state is ``[x, x_dot,
+    theta, theta_dot]`` — so ``terminated`` reads ``obs[0]`` and ``obs[1]``.
     """
 
     x_threshold: float = 2.4
