@@ -36,11 +36,11 @@ below.
 Here is what a trained balancer looks like under kicks:
 
 <p align="center" width="100%">
-<video src="https://github.com/semzit/weir/releases/download/demo-video/cartpole-balance-demo.mp4" width="80%" controls></video>
+<video src="https://github.com/user-attachments/assets/edd2b375-55d8-43bb-9167-7b81eaeb9c77" width="80%" controls></video>
 </p>
 
-The video is hosted as a GitHub release asset (`demo-video`); the local source file lives
-in `assets/cartpole-balance-demo.mp4` (H.264, 24 KB).
+The video is hosted as a GitHub user attachment (uploaded via issue #3); the local source
+file lives in `assets/cartpole-balance-demo.mp4` (H.264, 24 KB).
 
 ## Workflow
 
