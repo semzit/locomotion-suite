@@ -8,9 +8,11 @@ import numpy as np
 
 from weir.cli.utils import add_checkpoint_arg, add_seed_arg, compose_config, guarded_main
 from weir.core.contracts import AlgorithmPlugin, SimBackend
-from weir.core.factory import create_algorithm, create_sim
-from weir.core.run import MANIFEST_NAME, Run
+from weir.core.factory import create_algorithm
+from weir.core.run import MANIFEST_NAME, Run, build_sim
 from weir.core.utils import config_to_dict
+
+_FIXED_OVERRIDE_KEYS = ("agent", "algo")
 
 
 def rollout_metrics(
@@ -86,6 +88,7 @@ def run_eval(
         run.validate(sim)
         algorithm = run.algorithm()
     else:
+        _reject_fixed_overrides(overrides)
         base_agent = str(manifest["agent"]["name"])
         base_task = str(manifest["task"]["name"])
         cfg = compose_config(base_agent, base_task, overrides)
@@ -93,7 +96,7 @@ def run_eval(
         sim_config = config_to_dict(cfg.sim)
         task_config = config_to_dict(cfg.task)
         algorithm_config = config_to_dict(cfg.algo)
-        sim = create_sim(str(sim_config["plugin"]))
+        sim = build_sim(sim_config)
         sim.load(agent_config, {**sim_config, "task": task_config})
         run.validate(sim)
         algorithm = create_algorithm(str(algorithm_config["plugin"]))
@@ -102,6 +105,18 @@ def run_eval(
         return rollout_metrics(sim, algorithm, episodes, seed=seed, max_steps=max_steps)
     finally:
         sim.close()
+
+
+def _reject_fixed_overrides(overrides: list[str]) -> None:
+    """Reject overrides that target pieces fixed by the checkpoint."""
+    for override in overrides:
+        key = override.split("=")[0]
+        if key in _FIXED_OVERRIDE_KEYS or key.startswith(_FIXED_OVERRIDE_KEYS):
+            raise ValueError(
+                f"Override {key!r} targets the {key.split('.')[0]}, which is fixed by the "
+                "checkpoint. Evaluation overrides may change the task or sim "
+                "(e.g. --override task.params.x=1 or sim.robust=true)."
+            )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -117,7 +132,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--override",
         action="append",
         default=[],
-        help="Hydra override of the run's task, repeatable (e.g. --override task.params.nq=13).",
+        help="Override of the run's task or sim, repeatable (agent and algo are "
+        "fixed by the checkpoint).",
     )
     return parser
 

@@ -92,6 +92,33 @@ def test_run_eval_override_layers_on_manifest_agent(
     assert metrics["mean_episode_length"] == 10.0
 
 
+def test_run_eval_rejects_agent_override(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    run(make_config(["train.total_steps=32", "algo.n_steps=32"]))
+    checkpoint = tmp_path / "checkpoint.zip"
+
+    with pytest.raises(ValueError, match="fixed by the checkpoint"):
+        run_eval(checkpoint, episodes=1, seed=0, max_steps=10, overrides=["agent=humanoid"])
+
+
+def test_run_eval_rejects_algo_override(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    run(make_config(["train.total_steps=32", "algo.n_steps=32"]))
+    checkpoint = tmp_path / "checkpoint.zip"
+
+    with pytest.raises(ValueError, match="fixed by the checkpoint"):
+        run_eval(checkpoint, episodes=1, seed=0, max_steps=10, overrides=["algo.n_steps=128"])
+
+
+def test_run_eval_accepts_sim_override(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    run(make_config(["train.total_steps=32", "algo.n_steps=32"]))
+    checkpoint = tmp_path / "checkpoint.zip"
+
+    metrics = run_eval(checkpoint, episodes=1, seed=0, max_steps=10, overrides=["sim.robust=true"])
+    assert metrics["mean_episode_length"] == 10.0
+
+
 def test_run_resumes_from_checkpoint(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.chdir(tmp_path)
     run(make_config(["train.total_steps=32", "algo.n_steps=32"]))
