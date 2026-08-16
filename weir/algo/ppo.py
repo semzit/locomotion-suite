@@ -6,6 +6,7 @@ from typing import Any
 import numpy as np
 from gymnasium import Env
 from stable_baselines3 import PPO
+from stable_baselines3.common.callbacks import CheckpointCallback
 from torch import nn
 
 from weir.algo.utils import DeterministicPolicy, SpacesOnly
@@ -23,10 +24,12 @@ class PPOAlgorithm(AlgorithmPlugin):
     ) -> None:
         self.observation_shape = observation_shape
         self.action_shape = action_shape
+        self._checkpoint_freq: int | None = None
         checkpoint = config.get("checkpoint")
         if checkpoint:
             self._model = PPO.load(str(checkpoint))
             return
+        self._checkpoint_freq = config.get("checkpoint_freq")
         net_arch = list(config.get("net_arch", [64, 64]))
         self._model = PPO(
             "MlpPolicy",
@@ -48,7 +51,14 @@ class PPOAlgorithm(AlgorithmPlugin):
     def learn(self, env: Env, total_steps: int) -> dict[str, float]:
         self._require_model()
         self._model.set_env(env)
-        self._model.learn(total_timesteps=total_steps, progress_bar=False)
+        callback = None
+        if self._checkpoint_freq:
+            callback = CheckpointCallback(
+                save_freq=int(self._checkpoint_freq),
+                save_path=str(Path.cwd()),
+                name_prefix="checkpoint",
+            )
+        self._model.learn(total_timesteps=total_steps, progress_bar=False, callback=callback)
         return {"total_steps": float(total_steps)}
 
     def act(self, observations: Any, deterministic: bool = False) -> Any:
