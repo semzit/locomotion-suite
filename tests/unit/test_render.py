@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import imageio.v2 as imageio
 import numpy as np
 import pytest
 
@@ -100,6 +101,27 @@ def test_render_episode_stops_at_termination(tmp_path: Path) -> None:
     assert output.exists()
 
 
+def test_render_episode_paces_frames_to_realtime(tmp_path: Path) -> None:
+    sim = make_sim()  # cartpole: dt = 0.02
+    algo = create_algorithm("ppo")
+    algo.configure(sim.observation_shape(), sim.action_shape(), {})
+    output = tmp_path / "paced.mp4"
+    render_episode(
+        sim,
+        algo,
+        output,
+        frames_to_capture=6,
+        width=160,
+        height=120,
+        fps=30,
+        seed=0,
+    )
+    sim.close()
+    # dt=0.02, fps=30 -> interval = round(1 / 0.6) = 2 sim steps per frame
+    frames = imageio.mimread(output)
+    assert len(frames) == 6
+
+
 def test_cli_smoke(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     output = tmp_path / "cli.mp4"
     monkeypatch.setattr(
@@ -173,6 +195,10 @@ def test_cli_plays_back_manifest_env(tmp_path: Path, monkeypatch: pytest.MonkeyP
         def reset(self, seed: int | None = None) -> np.ndarray:
             return np.zeros(4, dtype=np.float32)
 
+        @property
+        def dt(self) -> float:
+            return 0.02
+
         def step(self, action: object) -> object:
             step = type(
                 "Step",
@@ -214,7 +240,15 @@ def test_cli_plays_back_manifest_env(tmp_path: Path, monkeypatch: pytest.MonkeyP
     monkeypatch.setattr(
         sys,
         "argv",
-        ["weir-render", "--checkpoint", str(tmp_path / "checkpoint.zip"), "--output", str(output)],
+        [
+            "weir-render",
+            "--checkpoint",
+            str(tmp_path / "checkpoint.zip"),
+            "--output",
+            str(output),
+            "--frame-interval",
+            "1",
+        ],
     )
     assert render_main() == 0
     assert output.exists()

@@ -21,18 +21,29 @@ def render_episode(
     output_path: Path,
     *,
     frames_to_capture: int | None = None,
+    frame_interval: int | None = None,
     width: int = 640,
     height: int = 480,
     fps: int = 30,
     seed: int = 0,
 ) -> Path:
-    """Roll out a policy and write the frames to an mp4 file at output_path."""
+    """Roll out a policy and write the frames to an mp4 file at output_path.
+
+    By default one frame is captured per ``1 / (dt * fps)`` simulation steps,
+    so the video plays at roughly realtime speed regardless of the sim
+    timestep. Pass ``frame_interval=1`` to capture every step.
+    """
+    if frame_interval is None:
+        frame_interval = max(1, round(1.0 / (sim.dt * fps)))
     frames: list[Any] = []
     observation = sim.reset(seed=seed)
+    steps = 0
     while frames_to_capture is None or len(frames) < frames_to_capture:
         action = algo.act(observation, deterministic=False)
         result = sim.step(action)
-        frames.append(sim.render_frame(width, height))
+        steps += 1
+        if steps % frame_interval == 0:
+            frames.append(sim.render_frame(width, height))
         if result.terminated or result.truncated:
             break
     imageio.mimsave(output_path, frames, fps=fps)
@@ -64,6 +75,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--time-limit", type=float, default=5.0)
     parser.add_argument("--output", default="video.mp4")
     parser.add_argument("--frames", type=int, default=120)
+    parser.add_argument(
+        "--frame-interval",
+        type=int,
+        default=None,
+        help="Simulation steps per video frame; defaults to realtime pacing (1 / dt / fps).",
+    )
     parser.add_argument("--width", type=int, default=640)
     parser.add_argument("--height", type=int, default=480)
     parser.add_argument("--fps", type=int, default=30)
@@ -171,6 +188,7 @@ def _play(sim: MuJoCoSim, algo: AlgorithmPlugin, args: argparse.Namespace) -> in
             algo,
             Path(args.output),
             frames_to_capture=args.frames,
+            frame_interval=args.frame_interval,
             width=args.width,
             height=args.height,
             fps=args.fps,

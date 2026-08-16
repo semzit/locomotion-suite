@@ -86,6 +86,11 @@ class MuJoCoSim(SimBackend):
             high=high,
         )
 
+    @property
+    def dt(self) -> float:
+        """The physics timestep in seconds."""
+        return float(self._require_model().opt.timestep)
+
     def render_frame(self, width: int = 640, height: int = 480) -> np.ndarray:
         """Render the current state with MuJoCo's offscreen renderer (RGB uint8).
 
