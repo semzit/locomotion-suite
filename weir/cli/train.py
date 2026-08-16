@@ -11,7 +11,7 @@ from omegaconf import DictConfig
 from weir.cli.utils import setup_logging
 from weir.core.contracts import Shape
 from weir.core.factory import create_algorithm
-from weir.core.run import MANIFEST_NAME, Run
+from weir.core.run import Run
 from weir.core.utils import CONFIG_DIR, config_to_dict, log_event
 from weir.envs.gym_env import GymEnv
 
@@ -35,7 +35,7 @@ def _write_manifest(
     action_shape: Shape,
 ) -> Path:
     """Write the run manifest so downstream tools can rebuild the environment."""
-    manifest = checkpoint.with_name(MANIFEST_NAME)
+    manifest = checkpoint.with_suffix(".meta.json")
     payload = {
         "version": 1,
         "agent": agent,
@@ -83,17 +83,19 @@ def run(cfg: DictConfig) -> dict[str, Any]:
 
     checkpoint = Path.cwd() / "checkpoint.zip"
     algorithm.save(checkpoint)
-    _write_manifest(
-        checkpoint,
-        agent=agent,
-        task=task,
-        sim_config=sim_config,
-        algorithm_config=algorithm_config,
-        seed=int(cfg.train.seed),
-        total_steps=total_steps,
-        observation_shape=observation_shape,
-        action_shape=action_shape,
-    )
+    manifest_kwargs = {
+        "agent": agent,
+        "task": task,
+        "sim_config": sim_config,
+        "algorithm_config": algorithm_config,
+        "seed": int(cfg.train.seed),
+        "total_steps": total_steps,
+        "observation_shape": observation_shape,
+        "action_shape": action_shape,
+    }
+    _write_manifest(checkpoint, **manifest_kwargs)
+    for periodic in Path.cwd().glob("checkpoint_*_steps.zip"):
+        _write_manifest(periodic, **manifest_kwargs)
     env.close()
 
     log_event(

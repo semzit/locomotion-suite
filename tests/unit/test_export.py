@@ -64,7 +64,7 @@ def test_export_policy_output_shape() -> None:
 
 def test_export_end_to_end(tmp_path: Path) -> None:
     algorithm = FakeAlgorithm()
-    checkpoint = tmp_path / "policy.pt"
+    checkpoint = tmp_path / "policy.zip"
     algorithm.save(checkpoint)
     onnx_path = tmp_path / "policy.onnx"
 
@@ -90,7 +90,7 @@ def test_verification_fails_against_different_policy(tmp_path: Path) -> None:
 
 
 def _write_manifest(directory: Path, *, plugin: str = "ppo", obs_dim: int = OBS_DIM) -> None:
-    (directory / "checkpoint.meta.json").write_text(
+    (directory / "policy.meta.json").write_text(
         json.dumps(
             {
                 "agent": {"name": "cartpole"},
@@ -106,7 +106,7 @@ def _write_manifest(directory: Path, *, plugin: str = "ppo", obs_dim: int = OBS_
 
 
 def test_cli_exports_and_verifies(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    checkpoint = tmp_path / "policy.pt"
+    checkpoint = tmp_path / "policy.zip"
     algorithm = FakeAlgorithm()
     algorithm.save(checkpoint)
     _write_manifest(tmp_path)
@@ -132,7 +132,7 @@ def test_cli_exports_and_verifies(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 def test_cli_returns_nonzero_on_verification_failure(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    checkpoint = tmp_path / "policy.pt"
+    checkpoint = tmp_path / "policy.zip"
     FakeAlgorithm().save(checkpoint)
     _write_manifest(tmp_path)
     monkeypatch.setattr("weir.cli.export.create_algorithm", lambda _name: FakeAlgorithm())
@@ -149,7 +149,7 @@ def test_cli_returns_nonzero_on_verification_failure(
 def test_cli_returns_nonzero_when_policy_export_unsupported(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    checkpoint = tmp_path / "policy.pt"
+    checkpoint = tmp_path / "policy.zip"
     checkpoint.write_text("ppo-checkpoint", encoding="utf-8")
     _write_manifest(tmp_path)
     monkeypatch.setattr(
@@ -164,7 +164,7 @@ def test_cli_returns_nonzero_when_policy_export_unsupported(
 def test_cli_rejects_checkpoint_without_manifest(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    checkpoint = tmp_path / "policy.pt"
+    checkpoint = tmp_path / "policy.zip"
     FakeAlgorithm().save(checkpoint)
     monkeypatch.setattr(
         sys,

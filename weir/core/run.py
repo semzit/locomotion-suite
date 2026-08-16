@@ -39,7 +39,7 @@ class Run:
     def open(cls, checkpoint: Path | str) -> Run:
         """Open a checkpoint, loading the manifest that sits beside it (if any)."""
         checkpoint = Path(checkpoint)
-        manifest = checkpoint.parent / MANIFEST_NAME
+        manifest = checkpoint.with_suffix(".meta.json")
         if manifest.is_file():
             config = json.loads(manifest.read_text(encoding="utf-8"))
             return cls(checkpoint, config)
