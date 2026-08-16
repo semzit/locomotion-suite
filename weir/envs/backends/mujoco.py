@@ -118,7 +118,9 @@ class MuJoCoSim(SimBackend):
         camera = mujoco.MjvCamera()
         mujoco.mjv_defaultCamera(camera)
         camera.lookat = data.body(1).xpos.copy()  # root body
-        camera.distance = 3.0
+        # Frame the whole model: distance scales with the model's bounding
+        # radius (e.g. the cartpole's pole tip must stay in view).
+        camera.distance = 3.5 * model.stat.extent
         camera.azimuth = 90
         camera.elevation = -20
         mujoco.mj_forward(model, data)
