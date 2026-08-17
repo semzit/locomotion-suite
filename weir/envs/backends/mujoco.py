@@ -26,6 +26,9 @@ class MuJoCoSim(SimBackend):
     def load(self, agent_config: dict[str, Any], sim_config: dict[str, Any]) -> None:
         model_path = str(agent_config["model"])
         self._model = mujoco.MjModel.from_xml_path(model_path)
+        dt = sim_config.get("dt")
+        if dt is not None:
+            self._model.opt.timestep = float(dt)
         self._data = mujoco.MjData(self._model)
         task_config = sim_config.get("task", {})
         task_name = str(task_config.get("name", "survive"))
