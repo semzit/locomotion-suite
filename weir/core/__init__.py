@@ -1,1 +1,1 @@
-"""Core plumbing: protocols, tasks, factory, and shared utilities."""
+"""Core plumbing: protocols, tasks, and shared utilities."""

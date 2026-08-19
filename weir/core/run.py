@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from weir.core.contracts import AlgorithmPlugin, SimBackend
-from weir.core.factory import create_algorithm, create_sim
+from weir.core.utils import create_algorithm, create_sim
 from weir.envs.wrappers.randomized import RandomizedSim
 
 MANIFEST_NAME = "checkpoint.meta.json"

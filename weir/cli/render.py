@@ -9,9 +9,8 @@ import imageio.v2 as imageio
 import numpy as np
 
 from weir.core.contracts import AlgorithmPlugin, DomainRandomizable
-from weir.core.factory import create_algorithm
 from weir.core.run import MANIFEST_NAME, Run
-from weir.core.utils import resolve_model_path
+from weir.core.utils import create_algorithm, resolve_model_path
 from weir.envs.backends.mujoco import MuJoCoSim
 
 

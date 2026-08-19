@@ -10,8 +10,8 @@ import torch
 from torch import nn
 
 from weir.cli.utils import guarded_main
-from weir.core.factory import create_algorithm
 from weir.core.run import MANIFEST_NAME, Run
+from weir.core.utils import create_algorithm
 
 DEFAULT_OPSET = 17
 

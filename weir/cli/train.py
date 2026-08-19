@@ -12,9 +12,8 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 from weir.cli.utils import setup_logging
 from weir.core.contracts import Shape, SimBackend
-from weir.core.factory import create_algorithm
 from weir.core.run import Run
-from weir.core.utils import CONFIG_DIR, config_to_dict, log_event
+from weir.core.utils import CONFIG_DIR, config_to_dict, create_algorithm, log_event
 from weir.envs.gym_env import GymEnv
 
 logger = logging.getLogger("weir")

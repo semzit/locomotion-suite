@@ -9,7 +9,7 @@ from weir.core.contracts import Action, Observation
 from weir.core.tasks.balance import BalanceTask
 from weir.core.tasks.standing import StandingTask
 from weir.core.tasks.survive import SurviveTask
-from weir.core.tasks.walk_forward import WalkForwardTask
+from weir.core.tasks.forward_gait import WalkForwardTask
 
 __all__ = [
     "BalanceTask",
